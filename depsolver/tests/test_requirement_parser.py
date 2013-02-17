@@ -5,29 +5,26 @@ from depsolver.errors \
         DepSolverError
 from depsolver.requirement_parser \
     import \
-        RequirementParser, CommaToken, ComparisonToken, DistributionNameToken, \
-        GEQToken, LEQToken, VersionToken, EqualSpecification, GEQSpecification, \
-        LEQSpecification
+        RequirementParser, CommaToken, DistributionNameToken, EqualToken, \
+        GEQToken, LEQToken, VersionToken, EqualSpecification, \
+        GEQSpecification, LEQSpecification
 
 class TestRequirementParser(unittest.TestCase):
     def test_lexer_simple(self):
+        r_tokens = [DistributionNameToken("numpy"), GEQToken(">="),
+                VersionToken("1.3.0")]
         tokens = list(RequirementParser().tokenize("numpy >= 1.3.0"))
-        self.assertEqual(len(tokens), 3)
-        self.assertTrue(isinstance(tokens[0], DistributionNameToken))
-        self.assertTrue(isinstance(tokens[1], ComparisonToken))
-        self.assertTrue(isinstance(tokens[2], VersionToken))
+        self.assertEqual(tokens, r_tokens)
 
+        r_tokens = [DistributionNameToken("numpy"), LEQToken("<="),
+                VersionToken("1.3.0")]
         tokens = list(RequirementParser().tokenize("numpy <= 1.3.0"))
-        self.assertEqual(len(tokens), 3)
-        self.assertTrue(isinstance(tokens[0], DistributionNameToken))
-        self.assertTrue(isinstance(tokens[1], ComparisonToken))
-        self.assertTrue(isinstance(tokens[2], VersionToken))
+        self.assertEqual(tokens, r_tokens)
 
+        r_tokens = [DistributionNameToken("numpy"), EqualToken("=="),
+                VersionToken("1.3.0")]
         tokens = list(RequirementParser().tokenize("numpy == 1.3.0"))
-        self.assertEqual(len(tokens), 3)
-        self.assertTrue(isinstance(tokens[0], DistributionNameToken))
-        self.assertTrue(isinstance(tokens[1], ComparisonToken))
-        self.assertTrue(isinstance(tokens[2], VersionToken))
+        self.assertEqual(tokens, r_tokens)
 
     def test_lexer_invalids(self):
         parser = RequirementParser()
@@ -35,19 +32,22 @@ class TestRequirementParser(unittest.TestCase):
                 lambda : parser.parse("numpy >= 1.2.3 | numpy <= 2.0.0"))
 
     def test_lexer_compounds(self):
+        r_tokens = [DistributionNameToken("numpy"), GEQToken(">="),
+                VersionToken("1.3.0"), CommaToken(","),
+                DistributionNameToken("numpy"), LEQToken("<="),
+                VersionToken("2.0.0")]
         tokens = list(RequirementParser().tokenize("numpy >= 1.3.0, numpy <= 2.0.0"))
-        self.assertEqual(len(tokens), 7)
-        self.assertTrue(isinstance(tokens[0], DistributionNameToken))
-        self.assertTrue(isinstance(tokens[1], ComparisonToken))
-        self.assertTrue(isinstance(tokens[2], VersionToken))
-        self.assertTrue(isinstance(tokens[3], CommaToken))
-        self.assertTrue(isinstance(tokens[4], DistributionNameToken))
-        self.assertTrue(isinstance(tokens[5], ComparisonToken))
-        self.assertTrue(isinstance(tokens[6], VersionToken))
+        self.assertEqual(tokens, r_tokens)
 
     def test_parser_simple(self):
         parse_dict = RequirementParser().parse("numpy >= 1.3.0")
         self.assertEqual(dict(parse_dict), {"numpy": [GEQSpecification("1.3.0")]})
+
+        parse_dict = RequirementParser().parse("numpy <= 1.3.0")
+        self.assertEqual(dict(parse_dict), {"numpy": [LEQSpecification("1.3.0")]})
+
+        parse_dict = RequirementParser().parse("numpy == 1.3.0")
+        self.assertEqual(dict(parse_dict), {"numpy": [EqualSpecification("1.3.0")]})
 
     def test_parser_invalids(self):
         parser = RequirementParser()
