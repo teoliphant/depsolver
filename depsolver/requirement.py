@@ -1,0 +1,102 @@
+import collections
+import re
+
+from depsolver.errors \
+    import \
+        DepSolverError
+from depsolver.version \
+    import \
+        Version
+
+V = Version.from_string
+
+_DEFAULT_SCANNER = re.Scanner([
+    (r"[a-zA-Z_]\w*", lambda scanner, token: DistributionNameToken(token)),
+    (r"\d[\w\.\-\+]*", lambda scanner, token: VersionToken(token)),
+    (r"==", lambda scanner, token: EqualToken(token)),
+    (r">=", lambda scanner, token: GEQToken(token)),
+    #(r">", lambda scanner, token: ComparisonToken(token)),
+    (r"<=", lambda scanner, token: LEQToken(token)),
+    #(r"<", lambda scanner, token: ComparisonToken(token)),
+    #(r"!=", lambda scanner, token: ComparisonToken(token)),
+    (",", lambda scanner, token: CommaToken(token)),
+    (" +", lambda scanner, token: None),
+])
+
+class Token(object):
+    typ = None
+    def __init__(self, value=None):
+        self.value = value
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.value)
+
+    # Mostly useful for testing
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and self.value == other.value
+
+class CommaToken(Token):
+    typ = "comma"
+
+class DistributionNameToken(Token):
+    typ = "distribution_name"
+
+class VersionToken(Token):
+    typ = "version"
+
+class ComparisonToken(Token):
+    typ = "comparison"
+
+class LEQToken(ComparisonToken):
+    typ = "leq"
+
+class GEQToken(ComparisonToken):
+    typ = "geq"
+
+class EqualToken(ComparisonToken):
+    typ = "equal"
+
+def iter_over_requirement(tokens):
+    """Yield a single requirement 'block' (i.e. a sequence of tokens between
+    comma).
+
+    Parameters
+    ----------
+    tokens: iterator
+        Iterator of tokens
+    """
+    while True:
+        block = []
+        token = tokens.next()
+        try:
+            while not isinstance(token, CommaToken):
+                block.append(token)
+                token = tokens.next()
+            yield block
+        except StopIteration, e:
+            yield block
+            raise e
+
+class RequirementParser(object):
+    """A simple parser for requirement strings."""
+    def __init__(self):
+        self._scanner = _DEFAULT_SCANNER
+
+    def tokenize(self, requirement_string):
+        scanned, remaining = self._scanner.scan(requirement_string)
+        if len(remaining) > 0:
+            raise DepSolverError("Invalid requirement string: %r" % requirement_string)
+        else:
+            return iter(scanned)
+
+    def parse(self, requirement_string):
+        parsed = collections.defaultdict(list)
+        tokens_stream = self.tokenize(requirement_string)
+        for requirement_block in iter_over_requirement(tokens_stream):
+            if len(requirement_block) == 3:
+                distribution, operator, version = requirement_block
+                parsed[distribution.value].append((operator, version))
+            else:
+                raise DepSolverError("Invalid requirement block: %s" % requirement_block)
+
+        return parsed
