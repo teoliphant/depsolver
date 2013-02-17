@@ -3,10 +3,11 @@ import unittest
 from depsolver.errors \
     import \
         DepSolverError
-from depsolver.requirement \
+from depsolver.requirement_parser \
     import \
         RequirementParser, CommaToken, ComparisonToken, DistributionNameToken, \
-        GEQToken, LEQToken, VersionToken
+        GEQToken, LEQToken, VersionToken, EqualSpecification, GEQSpecification, \
+        LEQSpecification
 
 class TestRequirementParser(unittest.TestCase):
     def test_lexer_simple(self):
@@ -46,7 +47,7 @@ class TestRequirementParser(unittest.TestCase):
 
     def test_parser_simple(self):
         parse_dict = RequirementParser().parse("numpy >= 1.3.0")
-        self.assertEqual(dict(parse_dict), {"numpy": [(GEQToken(">="), VersionToken("1.3.0"))]})
+        self.assertEqual(dict(parse_dict), {"numpy": [GEQSpecification("1.3.0")]})
 
     def test_parser_invalids(self):
         parser = RequirementParser()
@@ -54,8 +55,8 @@ class TestRequirementParser(unittest.TestCase):
 
     def test_parser_compounds(self):
         parse_dict = RequirementParser().parse("numpy >= 1.3.0, numpy <= 2.0.0")
-        self.assertEqual(dict(parse_dict),
-                {"numpy": [
-                    (GEQToken(">="), VersionToken("1.3.0")),
-                    (LEQToken("<="), VersionToken("2.0.0")),
-                    ]})
+        self.assertEqual(dict(parse_dict), {
+                    "numpy": [
+                        GEQSpecification("1.3.0"), LEQSpecification("2.0.0"),
+                    ]
+                })

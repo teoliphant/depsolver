@@ -77,6 +77,38 @@ def iter_over_requirement(tokens):
             yield block
             raise e
 
+class Specification(object):
+    def __init__(self, version):
+        self.version = version
+
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.version)
+
+    # Mostly useful for testing
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and self.version == other.version
+
+class EqualSpecification(Specification):
+    pass
+
+class GEQSpecification(Specification):
+    pass
+
+class LEQSpecification(Specification):
+    pass
+
+_OPERATOR_TO_SPEC = {
+        EqualToken: EqualSpecification,
+        GEQToken: GEQSpecification,
+        LEQToken: LEQSpecification,
+}
+def spec_factory(comparison_token):
+    klass = _OPERATOR_TO_SPEC.get(comparison_token.__class__, None)
+    if klass is None:
+        raise DepSolverError("Unsupported comparison token %s" % comparison_token)
+    else:
+        return klass
+
 class RequirementParser(object):
     """A simple parser for requirement strings."""
     def __init__(self):
@@ -95,7 +127,7 @@ class RequirementParser(object):
         for requirement_block in iter_over_requirement(tokens_stream):
             if len(requirement_block) == 3:
                 distribution, operator, version = requirement_block
-                parsed[distribution.value].append((operator, version))
+                parsed[distribution.value].append(spec_factory(operator)(version.value))
             else:
                 raise DepSolverError("Invalid requirement block: %s" % requirement_block)
 
