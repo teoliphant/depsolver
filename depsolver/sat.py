@@ -1,4 +1,8 @@
+import re
+
 from collections import OrderedDict
+
+_IS_VALID_LITERAL = re.compile("[a-zA-Z_][-+.\w\d]*")
 
 class Literal(object):
     """Creates a simple Literal to be used within clauses.
@@ -9,6 +13,8 @@ class Literal(object):
         Name of the literal (must consists of alphanumerical characters only)
     """
     def __init__(self, name):
+        if not _IS_VALID_LITERAL.match(name):
+            raise ValueError("Invalid literal name: %s" % name)
         self.name = name
 
     def __repr__(self):

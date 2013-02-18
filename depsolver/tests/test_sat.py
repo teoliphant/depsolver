@@ -16,7 +16,6 @@ class TestLiteral(unittest.TestCase):
 
         self.assertRaises(ValueError, lambda: a.evaluate({}))
 
-    @unittest.expectedFailure
     def test_invalid_literal_name(self):
         self.assertRaises(ValueError, lambda: Literal("~a"))
 
