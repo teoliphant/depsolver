@@ -10,3 +10,6 @@ Its requirements are the following:
           more than a few seconds for a user who has only a few tens of
           packages currently installed)
         - well tested and documented
+
+The design is strongly inspired from `PHP Composer packager
+<http://getcomposer.org>`_
