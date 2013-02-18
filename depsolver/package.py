@@ -31,7 +31,11 @@ class Package(object):
             self.dependencies = set(dependencies)
 
         # FIXME: id detail should be implemented outside Package interface
-        self.id = hashlib.md5(self.name + "-" + str(self.version)).hexdigest()
+        self.id = hashlib.md5(self.unique_name).hexdigest()
+
+    @property
+    def unique_name(self):
+        return self.name + "-" + str(self.version)
 
     def __repr__(self):
         return "Package(%s, %s)" % (self.name, self.version)
