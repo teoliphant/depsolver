@@ -1,6 +1,12 @@
+from depsolver.errors \
+    import \
+        DepSolverError
+from depsolver.constraints \
+    import \
+        Equal, GEQ, LEQ
 from depsolver.requirement_parser \
     import \
-        EqualSpecification, GEQSpecification, LEQSpecification, RawRequirementParser
+        RawRequirementParser
 from depsolver.version \
     import \
         MaxVersion, MinVersion, Version
@@ -13,7 +19,7 @@ class Requirement(object):
 
         # transform GE and LE into NOT + corresponding GEQ/LEQ
         # Take the min of GEQ, max of LEQ
-        equals = [req for req in specs if isinstance(req, EqualSpecification)]
+        equals = [req for req in specs if isinstance(req, Equal)]
         if len(equals) > 1:
             self._cannot_match = True
             self._equal = None
@@ -24,14 +30,14 @@ class Requirement(object):
             self._cannot_match = False
             self._equal = None
 
-        geq = [req for req in specs if isinstance(req, GEQSpecification)]
+        geq = [req for req in specs if isinstance(req, GEQ)]
         geq_versions = [V(g.version) for g in geq]
         if len(geq_versions) > 0:
             self._min_bound = max(geq_versions)
         else:
             self._min_bound = MinVersion()
 
-        leq = [req for req in specs if isinstance(req, LEQSpecification)]
+        leq = [req for req in specs if isinstance(req, LEQ)]
         leq_versions = [V(l.version) for l in leq]
         if len(leq_versions) > 0:
             self._max_bound = min(leq_versions)

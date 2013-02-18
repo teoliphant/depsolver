@@ -1,13 +1,15 @@
 import unittest
 
+from depsolver.constraints \
+    import \
+        Equal, GEQ, LEQ
 from depsolver.errors \
     import \
         DepSolverError
 from depsolver.requirement_parser \
     import \
         RawRequirementParser, CommaToken, DistributionNameToken, EqualToken, \
-        GEQToken, LEQToken, VersionToken, EqualSpecification, \
-        GEQSpecification, LEQSpecification
+        GEQToken, LEQToken, VersionToken
 
 class TestRawRequirementParser(unittest.TestCase):
     def test_lexer_simple(self):
@@ -41,13 +43,13 @@ class TestRawRequirementParser(unittest.TestCase):
 
     def test_parser_simple(self):
         parse_dict = RawRequirementParser().parse("numpy >= 1.3.0")
-        self.assertEqual(dict(parse_dict), {"numpy": [GEQSpecification("1.3.0")]})
+        self.assertEqual(dict(parse_dict), {"numpy": [GEQ("1.3.0")]})
 
         parse_dict = RawRequirementParser().parse("numpy <= 1.3.0")
-        self.assertEqual(dict(parse_dict), {"numpy": [LEQSpecification("1.3.0")]})
+        self.assertEqual(dict(parse_dict), {"numpy": [LEQ("1.3.0")]})
 
         parse_dict = RawRequirementParser().parse("numpy == 1.3.0")
-        self.assertEqual(dict(parse_dict), {"numpy": [EqualSpecification("1.3.0")]})
+        self.assertEqual(dict(parse_dict), {"numpy": [Equal("1.3.0")]})
 
     def test_parser_invalids(self):
         parser = RawRequirementParser()
@@ -57,6 +59,6 @@ class TestRawRequirementParser(unittest.TestCase):
         parse_dict = RawRequirementParser().parse("numpy >= 1.3.0, numpy <= 2.0.0")
         self.assertEqual(dict(parse_dict), {
                     "numpy": [
-                        GEQSpecification("1.3.0"), LEQSpecification("2.0.0"),
+                        GEQ("1.3.0"), LEQ("2.0.0"),
                     ]
                 })

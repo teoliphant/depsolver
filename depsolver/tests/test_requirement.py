@@ -8,7 +8,7 @@ from depsolver.requirement \
         Requirement, RequirementParser
 from depsolver.requirement_parser \
     import \
-        EqualSpecification, GEQSpecification, LEQSpecification
+        Equal, GEQ, LEQ
 from depsolver.version \
     import \
         Version
@@ -19,21 +19,21 @@ class TestRequirementParser(unittest.TestCase):
     def test_simple(self):
         parser = RequirementParser()
 
-        r_requirements = [Requirement("numpy", [GEQSpecification("1.3.0")])]
+        r_requirements = [Requirement("numpy", [GEQ("1.3.0")])]
         requirements = parser.parse("numpy >= 1.3.0")
         self.assertEqual(r_requirements, list(requirements))
 
-        r_requirements = [Requirement("numpy", [GEQSpecification("1.3.0"),
-                                                LEQSpecification("2.0.0")])]
+        r_requirements = [Requirement("numpy", [GEQ("1.3.0"),
+                                                LEQ("2.0.0")])]
         requirements = parser.parse("numpy >= 1.3.0, numpy <= 2.0.0")
         self.assertEqual(r_requirements, list(requirements))
 
-        r_requirements = [Requirement("numpy", [EqualSpecification("1.3.0")])]
+        r_requirements = [Requirement("numpy", [Equal("1.3.0")])]
         requirements = parser.parse("numpy == 1.3.0")
         self.assertEqual(r_requirements, list(requirements))
 
-        r_requirements = [Requirement("numpy", [EqualSpecification("1.3.0"),
-                                                EqualSpecification("1.4.0")])]
+        r_requirements = [Requirement("numpy", [Equal("1.3.0"),
+                                                Equal("1.4.0")])]
         requirements = parser.parse("numpy == 1.3.0, numpy == 1.4.0")
         self.assertEqual(r_requirements, list(requirements))
 

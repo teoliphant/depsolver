@@ -6,7 +6,7 @@ from depsolver.errors \
         DepSolverError
 from depsolver.constraints \
     import \
-        EqualSpecification, GEQSpecification, LEQSpecification
+        Equal, GEQ, LEQ
 from depsolver.version \
     import \
         Version
@@ -81,9 +81,9 @@ def iter_over_requirement(tokens):
             raise e
 
 _OPERATOR_TO_SPEC = {
-        EqualToken: EqualSpecification,
-        GEQToken: GEQSpecification,
-        LEQToken: LEQSpecification,
+        EqualToken: Equal,
+        GEQToken: GEQ,
+        LEQToken: LEQ,
 }
 
 def _spec_factory(comparison_token):

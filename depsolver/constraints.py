@@ -1,4 +1,4 @@
-class Specification(object):
+class _Constraint(object):
     def __init__(self, version):
         self.version = version
 
@@ -9,12 +9,11 @@ class Specification(object):
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.version == other.version
 
-class EqualSpecification(Specification):
+class Equal(_Constraint):
     pass
 
-class GEQSpecification(Specification):
+class GEQ(_Constraint):
     pass
 
-class LEQSpecification(Specification):
+class LEQ(_Constraint):
     pass
-
