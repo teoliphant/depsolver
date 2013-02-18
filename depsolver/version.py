@@ -203,6 +203,14 @@ class Version(object):
         s += ")"
         return s
 
+    def __str__(self):
+        s = "%s.%s.%s" % (self.major, self.minor, self.patch)
+        if self.pre_release:
+            s += "-%r" % (self.pre_release,)
+        if self.build:
+            s += "+%r" % (self.build,)
+        return s
+
     # Comparison API
     def _ensure_can_compare(self, other):
         if not isinstance(other, Version):
@@ -228,3 +236,35 @@ class Version(object):
 
     def __ge__(self, other):
         return self > other or self == other
+
+class MinVersion(Version):
+    def __init__(self):
+        pass
+
+    def __eq__(self, other):
+        return other.__class__ == self.__class__
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        return True
+
+    def __gt__(self, other):
+        return False
+
+class MaxVersion(Version):
+    def __init__(self):
+        pass
+
+    def __eq__(self, other):
+        return other.__class__ == self.__class__
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        return False
+
+    def __gt__(self, other):
+        return True

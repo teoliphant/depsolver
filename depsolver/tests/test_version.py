@@ -7,7 +7,8 @@ else:
 
 from depsolver.version \
     import \
-        BuildVersion, PreReleaseVersion, Version, is_version_valid
+        BuildVersion, MaxVersion, MinVersion, PreReleaseVersion, Version, \
+        is_version_valid
 
 V = Version.from_string
 P = PreReleaseVersion.from_string
@@ -137,3 +138,18 @@ class TestPreReleaseVersionComparison(unittest.TestCase):
         self.assertFalse(V("1.2.1") <= V("1.2.0"))
         self.assertTrue(V("1.2.0") <= V("1.2.1"))
         self.assertTrue(V("1.2.0") <= V("1.2.0"))
+
+class TestMinMaxVersion(unittest.TestCase):
+    def test_min_version(self):
+        min_version = MinVersion()
+        self.assertTrue(min_version < V("0.0.0"))
+        self.assertTrue(min_version <= V("0.0.0"))
+        self.assertFalse(min_version > V("0.0.0"))
+        self.assertFalse(min_version >= V("0.0.0"))
+
+    def test_max_version(self):
+        max_version = MaxVersion()
+        self.assertTrue(max_version > V("99.99.99"))
+        self.assertTrue(max_version >= V("99.99.99"))
+        self.assertFalse(max_version < V("99.99.99"))
+        self.assertFalse(max_version <= V("99.99.99"))
