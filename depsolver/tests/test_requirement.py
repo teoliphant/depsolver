@@ -1,8 +1,5 @@
 import unittest
 
-from depsolver.package \
-    import \
-        Package
 from depsolver.requirement \
     import \
         Requirement, RequirementParser
@@ -52,25 +49,32 @@ class TestRequirementParser(unittest.TestCase):
         self.assertEqual(numpy_requirement, Requirement.from_string(requirement_string))
 
     def test_matches(self):
-        parser = RequirementParser()
+        R = Requirement.from_string
 
-        numpy_requirement = list(parser.parse("numpy >= 1.3.0, numpy <= 2.0.0"))[0]
-        self.assertFalse(numpy_requirement.match(Package("numpy", V("1.2.0"))))
-        self.assertTrue(numpy_requirement.match(Package("numpy", V("1.4.0"))))
-        self.assertTrue(numpy_requirement.match(Package("numpy", V("1.5.0"))))
+        numpy_requirement = R("numpy >= 1.3.0, numpy <= 1.4.0")
+        # provide is an equality constraint
+        self.assertFalse(numpy_requirement.matches(R("numpy == 1.2.0")))
+        self.assertTrue(numpy_requirement.matches(R("numpy == 1.3.0")))
+        self.assertTrue(numpy_requirement.matches(R("numpy == 1.4.0")))
+        self.assertFalse(numpy_requirement.matches(R("numpy == 1.5.0")))
 
-        numpy_requirement = list(parser.parse("numpy == 1.3.0"))[0]
-        self.assertFalse(numpy_requirement.match(Package("numpy", V("1.2.0"))))
-        self.assertTrue(numpy_requirement.match(Package("numpy", V("1.3.0"))))
-        self.assertFalse(numpy_requirement.match(Package("numpy", V("1.4.0"))))
-        self.assertFalse(numpy_requirement.match(Package("numpy", V("1.5.0"))))
+        # provide is a different name
+        self.assertFalse(numpy_requirement.matches(R("numpypy == 1.3.0")))
 
-        numpy_requirement = list(parser.parse("numpy >= 1.3.0"))[0]
-        self.assertFalse(numpy_requirement.match(Package("numpy", V("1.2.0"))))
-        self.assertTrue(numpy_requirement.match(Package("numpy", V("1.4.0"))))
-        self.assertTrue(numpy_requirement.match(Package("numpy", V("1.5.0"))))
+        # provide is a range
+        self.assertTrue(numpy_requirement.matches(R("numpy >= 1.3.0")))
+        self.assertTrue(numpy_requirement.matches(R("numpy >= 1.4.0")))
+        self.assertFalse(numpy_requirement.matches(R("numpy >= 1.5.0")))
 
-        numpy_requirement = list(parser.parse("numpy <= 1.3.0"))[0]
-        self.assertTrue(numpy_requirement.match(Package("numpy", V("1.2.0"))))
-        self.assertFalse(numpy_requirement.match(Package("numpy", V("1.4.0"))))
-        self.assertFalse(numpy_requirement.match(Package("numpy", V("1.5.0"))))
+        self.assertTrue(numpy_requirement.matches(R("numpy >= 1.3.0, numpy <= 1.5.0")))
+        self.assertTrue(numpy_requirement.matches(R("numpy >= 1.4.0, numpy <= 1.5.0")))
+        self.assertFalse(numpy_requirement.matches(R("numpy >= 1.5.0, numpy <= 1.5.0")))
+
+        self.assertTrue(numpy_requirement.matches(R("numpy >= 1.2.0, numpy <= 1.3.0")))
+        self.assertFalse(numpy_requirement.matches(R("numpy >= 1.2.0, numpy <= 1.2.5")))
+
+        numpy_requirement = R("numpy == 1.3.0")
+        self.assertTrue(numpy_requirement.matches(R("numpy == 1.3.0")))
+        self.assertFalse(numpy_requirement.matches(R("numpy == 1.2.0")))
+        self.assertTrue(numpy_requirement.matches(R("numpy >= 1.3.0")))
+        self.assertTrue(numpy_requirement.matches(R("numpy <= 1.4.0")))

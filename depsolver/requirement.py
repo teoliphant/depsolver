@@ -79,24 +79,29 @@ class Requirement(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-    def match(self, package):
-        """Return True if the given package matches this requirement."""
-        if not self.name in package.provides:
+    def matches(self, provider):
+        """Return True if provider requirement and this requirement are
+        compatible."""
+        if self.name != provider.name:
             return False
         if self._cannot_match:
             return False
-        else:
-            version = package.version
-            if self._equal:
-                if version == self._equal:
-                    return True
+        if self._equal is None:
+            if provider._equal is None:
+                if self._min_bound > provider._min_bound:
+                    return provider.matches(self)
                 else:
-                    return False
+                    return self._max_bound >= provider._min_bound
             else:
-                if version >= self._min_bound and version <= self._max_bound:
+                if provider._equal >= self._min_bound and provider._equal <= self._max_bound:
                     return True
                 else:
                     return False
+        else:
+            if provider._equal is not None:
+                return provider._equal == self._equal
+            else:
+                return provider.matches(self)
 
 class RequirementParser(object):
     def __init__(self):
