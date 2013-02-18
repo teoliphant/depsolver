@@ -13,7 +13,29 @@ from depsolver.version \
 
 V = Version.from_string
 
+def _check_iter_exactly_one(iterator):
+    try:
+        ret = iterator.next()
+    except StopIteration:
+        return False
+    else:
+        try:
+            iterator.next()
+            return False
+        except StopIteration:
+            return ret
+
 class Requirement(object):
+    @classmethod
+    def from_string(cls, requirement_string):
+        parser = RequirementParser()
+        requirements = parser.parse(requirement_string)
+        inst = _check_iter_exactly_one(requirements)
+        if inst:
+            return inst
+        else:
+            raise DepSolverError("Invalid requirement string %r" % requirement_string)
+
     def __init__(self, name, specs):
         self.name = name
 

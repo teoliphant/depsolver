@@ -44,7 +44,14 @@ class TestRequirementParser(unittest.TestCase):
 
         self.assertEqual(repr(numpy_requirement), requirement_string)
 
-    def test_match(self):
+    def test_from_string(self):
+        requirement_string = "numpy >= 1.3.0, numpy <= 2.0.0"
+        parser = RequirementParser()
+        numpy_requirement = list(parser.parse(requirement_string))[0]
+
+        self.assertEqual(numpy_requirement, Requirement.from_string(requirement_string))
+
+    def test_matches(self):
         parser = RequirementParser()
 
         numpy_requirement = list(parser.parse("numpy >= 1.3.0, numpy <= 2.0.0"))[0]
