@@ -253,6 +253,9 @@ class MinVersion(Version):
     def __gt__(self, other):
         return False
 
+    def __str__(self):
+        return "MinVersion"
+
 class MaxVersion(Version):
     def __init__(self):
         pass
@@ -268,3 +271,6 @@ class MaxVersion(Version):
 
     def __gt__(self, other):
         return True
+
+    def __str__(self):
+        return "MaxVersion"

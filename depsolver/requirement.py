@@ -40,9 +40,9 @@ class Requirement(object):
 
     def __repr__(self):
         r = []
-        if self._min_bound:
+        if self._min_bound != MinVersion():
             r.append("%s >= %s" % (self.name, self._min_bound))
-        if self._max_bound:
+        if self._max_bound != MaxVersion():
             r.append("%s <= %s" % (self.name, self._max_bound))
         if self._equal:
             r.append("%s == %s" % (self.name, self._equal))
