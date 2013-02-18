@@ -109,7 +109,7 @@ def spec_factory(comparison_token):
     else:
         return klass
 
-class RequirementParser(object):
+class RawRequirementParser(object):
     """A simple parser for requirement strings."""
     def __init__(self):
         self._scanner = _DEFAULT_SCANNER
