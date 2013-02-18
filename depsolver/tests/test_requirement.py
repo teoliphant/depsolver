@@ -57,3 +57,13 @@ class TestRequirementParser(unittest.TestCase):
         self.assertTrue(numpy_requirement.match(Package("numpy", V("1.3.0"))))
         self.assertFalse(numpy_requirement.match(Package("numpy", V("1.4.0"))))
         self.assertFalse(numpy_requirement.match(Package("numpy", V("1.5.0"))))
+
+        numpy_requirement = list(parser.parse("numpy >= 1.3.0"))[0]
+        self.assertFalse(numpy_requirement.match(Package("numpy", V("1.2.0"))))
+        self.assertTrue(numpy_requirement.match(Package("numpy", V("1.4.0"))))
+        self.assertTrue(numpy_requirement.match(Package("numpy", V("1.5.0"))))
+
+        numpy_requirement = list(parser.parse("numpy <= 1.3.0"))[0]
+        self.assertTrue(numpy_requirement.match(Package("numpy", V("1.2.0"))))
+        self.assertFalse(numpy_requirement.match(Package("numpy", V("1.4.0"))))
+        self.assertFalse(numpy_requirement.match(Package("numpy", V("1.5.0"))))

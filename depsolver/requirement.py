@@ -3,7 +3,7 @@ from depsolver.requirement_parser \
         EqualSpecification, GEQSpecification, LEQSpecification, RawRequirementParser
 from depsolver.version \
     import \
-        Version
+        MaxVersion, MinVersion, Version
 
 V = Version.from_string
 
@@ -29,14 +29,14 @@ class Requirement(object):
         if len(geq_versions) > 0:
             self._min_bound = max(geq_versions)
         else:
-            self._min_bound = None
+            self._min_bound = MinVersion()
 
         leq = [req for req in specs if isinstance(req, LEQSpecification)]
         leq_versions = [V(l.version) for l in leq]
         if len(leq_versions) > 0:
             self._max_bound = min(leq_versions)
         else:
-            self._max_bound = None
+            self._max_bound = MaxVersion()
 
     def __repr__(self):
         r = []
