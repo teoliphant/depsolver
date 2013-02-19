@@ -40,17 +40,17 @@ class TestClause(unittest.TestCase):
         b = Literal("b")
         clause = Clause([a, b])
 
-        self.assertEqual(clause.literals, set(["a", "b"]))
+        self.assertEqual(clause.literal_names, set(["a", "b"]))
 
     def test_create_from_string(self):
         clause = Clause.from_string("a | b | ~c")
 
-        self.assertEqual(clause.literals, set(["a", "b", "c"]))
+        self.assertEqual(clause.literal_names, set(["a", "b", "c"]))
         self.assertTrue(clause.evaluate({"a": False, "b": False, "c": False}))
 
         clause = Clause.from_string("a | b | c")
 
-        self.assertEqual(clause.literals, set(["a", "b", "c"]))
+        self.assertEqual(clause.literal_names, set(["a", "b", "c"]))
         self.assertFalse(clause.evaluate({"a": False, "b": False, "c": False}))
 
     def test_or(self):
@@ -59,7 +59,7 @@ class TestClause(unittest.TestCase):
         clause = Clause([a, b])
         clause |= Literal("c")
 
-        self.assertEqual(clause.literals, set(["a", "b", "c"]))
+        self.assertEqual(clause.literal_names, set(["a", "b", "c"]))
 
         a = Literal("a")
         b = Literal("b")
@@ -69,7 +69,7 @@ class TestClause(unittest.TestCase):
         d = Literal("d")
         clause |= Clause([c, d])
 
-        self.assertEqual(clause.literals, set(["a", "b", "c", "d"]))
+        self.assertEqual(clause.literal_names, set(["a", "b", "c", "d"]))
 
     def test_repr(self):
         a = Literal("a")

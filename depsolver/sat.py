@@ -55,18 +55,18 @@ class Clause(object):
         return cls(literals)
 
     def __init__(self, literals):
-        self._literals = literals
+        self.literals = literals
         self._name_to_literal = dict((literal.name, literal) for literal in literals)
 
         self._literals_set = set(l.name for l in literals)
 
     @property
-    def literals(self):
+    def literal_names(self):
         return self._literals_set
 
     def evaluate(self, values):
         ret = False
-        for literal in self._literals:
+        for literal in self.literals:
             if not literal.name in values:
                 raise ValueError("literal %s value is undefined" % (literal.name,))
             else:
@@ -75,20 +75,20 @@ class Clause(object):
 
     def __or__(self, other):
         if isinstance(other, Clause):
-            return Clause(self._literals + other._literals)
+            return Clause(self.literals + other.literals)
         elif isinstance(other, Literal):
-            return Clause(self._literals + [other])
+            return Clause(self.literals + [other])
         else:
             raise TypeError("unsupported type %s" % type(other))
 
     def __repr__(self):
         def _simple_literal(l):
             return "~%s" % l.name if isinstance(l, Not) else l.name
-        return "C({})".format(" | ".join(_simple_literal(l) for l in self._literals))
+        return "C({})".format(" | ".join(_simple_literal(l) for l in self.literals))
 
 def _find_unset_variable(clauses, variables):
     for clause in clauses:
-        for l in clause.literals:
+        for l in clause.literal_names:
             if not l in variables:
                 return l
     return None
