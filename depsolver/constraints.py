@@ -1,4 +1,15 @@
 class _Constraint(object):
+    def __repr__(self):
+        return "%s" % self.__class__.__name__
+
+    # Mostly useful for testing
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+class Any(_Constraint):
+    pass
+
+class _VersionConstraint(_Constraint):
     def __init__(self, version):
         self.version = version
 
@@ -9,11 +20,11 @@ class _Constraint(object):
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.version == other.version
 
-class Equal(_Constraint):
+class Equal(_VersionConstraint):
     pass
 
-class GEQ(_Constraint):
+class GEQ(_VersionConstraint):
     pass
 
-class LEQ(_Constraint):
+class LEQ(_VersionConstraint):
     pass
