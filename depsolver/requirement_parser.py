@@ -6,7 +6,7 @@ from depsolver.errors \
         DepSolverError
 from depsolver.constraints \
     import \
-        Equal, GEQ, LEQ
+        Any, Equal, GEQ, LEQ
 from depsolver.version \
     import \
         Version
@@ -112,6 +112,9 @@ class RawRequirementParser(object):
             if len(requirement_block) == 3:
                 distribution, operator, version = requirement_block
                 parsed[distribution.value].append(_spec_factory(operator)(version.value))
+            elif len(requirement_block) == 1:
+                distribution = requirement_block[0]
+                parsed[distribution.value].append(Any())
             else:
                 raise DepSolverError("Invalid requirement block: %s" % requirement_block)
 

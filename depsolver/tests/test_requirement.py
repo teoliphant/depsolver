@@ -1,11 +1,14 @@
 import unittest
 
+from depsolver.errors \
+    import \
+        DepSolverError
 from depsolver.requirement \
     import \
         Requirement, RequirementParser
 from depsolver.requirement_parser \
     import \
-        Equal, GEQ, LEQ
+        Any, Equal, GEQ, LEQ
 from depsolver.version \
     import \
         Version
@@ -33,13 +36,34 @@ class TestRequirementParser(unittest.TestCase):
                                                 Equal("1.4.0")])]
         requirements = parser.parse("numpy == 1.3.0, numpy == 1.4.0")
         self.assertEqual(r_requirements, list(requirements))
+        self.assertTrue(requirements[0]._cannot_match)
+
+        r_requirements = [Requirement("numpy", [Any()])]
+        requirements = parser.parse("numpy")
+        self.assertEqual(r_requirements, list(requirements))
 
     def test_repr(self):
-        requirement_string = "numpy >= 1.3.0, numpy <= 2.0.0"
         parser = RequirementParser()
+
+        requirement_string = "numpy >= 1.3.0, numpy <= 2.0.0"
         numpy_requirement = list(parser.parse(requirement_string))[0]
 
         self.assertEqual(repr(numpy_requirement), requirement_string)
+
+        requirement_string = "numpy"
+        numpy_requirement = list(parser.parse(requirement_string))[0]
+
+        self.assertEqual(repr(numpy_requirement), "numpy *")
+
+        requirement_string = "numpy == 1.2.0"
+        numpy_requirement = list(parser.parse(requirement_string))[0]
+
+        self.assertEqual(repr(numpy_requirement), "numpy == 1.2.0")
+
+        requirement_string = "numpy == 1.3.0, numpy == 1.4.0"
+        numpy_requirement = list(parser.parse(requirement_string))[0]
+
+        self.assertEqual(repr(numpy_requirement), "numpy None")
 
     def test_from_string(self):
         requirement_string = "numpy >= 1.3.0, numpy <= 2.0.0"
@@ -48,11 +72,15 @@ class TestRequirementParser(unittest.TestCase):
 
         self.assertEqual(numpy_requirement, Requirement.from_string(requirement_string))
 
-    def test_matches(self):
+        self.assertRaises(DepSolverError,
+                lambda: Requirement.from_string("numpy <= 1.2.0, scipy >= 2.3.2"))
+
+    def test_matches_simple(self):
         R = Requirement.from_string
 
         numpy_requirement = R("numpy >= 1.3.0, numpy <= 1.4.0")
         # provide is an equality constraint
+        self.assertTrue(numpy_requirement.matches(R("numpy")))
         self.assertFalse(numpy_requirement.matches(R("numpy == 1.2.0")))
         self.assertTrue(numpy_requirement.matches(R("numpy == 1.3.0")))
         self.assertTrue(numpy_requirement.matches(R("numpy == 1.4.0")))
@@ -78,3 +106,9 @@ class TestRequirementParser(unittest.TestCase):
         self.assertFalse(numpy_requirement.matches(R("numpy == 1.2.0")))
         self.assertTrue(numpy_requirement.matches(R("numpy >= 1.3.0")))
         self.assertTrue(numpy_requirement.matches(R("numpy <= 1.4.0")))
+
+    def test_matches_nomatch(self):
+        R = Requirement.from_string
+
+        numpy_requirement = R("numpy >= 1.3.0, numpy <= 1.2.0")
+        self.assertFalse(numpy_requirement.matches(R("numpy")))

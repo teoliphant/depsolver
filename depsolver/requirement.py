@@ -13,31 +13,21 @@ from depsolver.version \
 
 V = Version.from_string
 
-def _check_iter_exactly_one(iterator):
-    try:
-        ret = iterator.next()
-    except StopIteration:
-        return False
-    else:
-        try:
-            iterator.next()
-            return False
-        except StopIteration:
-            return ret
-
 class Requirement(object):
     @classmethod
     def from_string(cls, requirement_string):
         parser = RequirementParser()
         requirements = parser.parse(requirement_string)
-        inst = _check_iter_exactly_one(requirements)
-        if inst:
-            return inst
-        else:
+        if len(requirements) != 1:
             raise DepSolverError("Invalid requirement string %r" % requirement_string)
+        else:
+            return requirements[0]
 
     def __init__(self, name, specs):
         self.name = name
+
+        self._min_bound = MinVersion()
+        self._max_bound = MaxVersion()
 
         # transform GE and LE into NOT + corresponding GEQ/LEQ
         # Take the min of GEQ, max of LEQ
@@ -48,6 +38,7 @@ class Requirement(object):
         elif len(equals) == 1:
             self._cannot_match = False
             self._equal = V(equals[0].version)
+            self._min_bound = self._max_bound = self._equal
         else:
             self._cannot_match = False
             self._equal = None
@@ -56,24 +47,28 @@ class Requirement(object):
         geq_versions = [V(g.version) for g in geq]
         if len(geq_versions) > 0:
             self._min_bound = max(geq_versions)
-        else:
-            self._min_bound = MinVersion()
 
         leq = [req for req in specs if isinstance(req, LEQ)]
         leq_versions = [V(l.version) for l in leq]
         if len(leq_versions) > 0:
             self._max_bound = min(leq_versions)
-        else:
-            self._max_bound = MaxVersion()
+
+        if self._min_bound > self._max_bound:
+            self._cannot_match = True
 
     def __repr__(self):
         r = []
-        if self._min_bound != MinVersion():
-            r.append("%s >= %s" % (self.name, self._min_bound))
-        if self._max_bound != MaxVersion():
-            r.append("%s <= %s" % (self.name, self._max_bound))
-        if self._equal:
+        if self._cannot_match:
+            r.append("%s None" % self.name)
+        elif self._equal:
             r.append("%s == %s" % (self.name, self._equal))
+        else:
+            if self._min_bound != MinVersion():
+                r.append("%s >= %s" % (self.name, self._min_bound))
+            if self._max_bound != MaxVersion():
+                r.append("%s <= %s" % (self.name, self._max_bound))
+            if self._min_bound == MinVersion() and self._max_bound == MaxVersion():
+                r.append("%s *" % self.name)
         return ", ".join(r)
 
     def __eq__(self, other):
@@ -107,6 +102,9 @@ class RequirementParser(object):
     def __init__(self):
         self._parser = RawRequirementParser()
 
-    def parse(self, requirement_string):
+    def iter_parse(self, requirement_string):
         for distribution_name, specs in self._parser.parse(requirement_string).iteritems():
             yield Requirement(distribution_name, specs)
+
+    def parse(self, requirement_string):
+        return [r for r in self.iter_parse(requirement_string)]
