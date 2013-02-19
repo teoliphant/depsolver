@@ -11,8 +11,7 @@ class Package(object):
         version: object
             Instance of Version
         provides: None or sequence
-            Sequence of distribution name provided. Package name always
-            considered provided
+            Sequence of Requirements.
         dependencies: None or sequence
             Sequence of Requirements.
         """
@@ -23,7 +22,6 @@ class Package(object):
             self.provides = set()
         else:
             self.provides = set(provides)
-        self.provides.add(self.name)
 
         if dependencies is None:
             self.dependencies = set()
