@@ -59,6 +59,7 @@ class Clause(object):
         self._name_to_literal = dict((literal.name, literal) for literal in literals)
 
         self._literals_set = set(l.name for l in literals)
+        self.is_assertion = len(literals) == 1
 
     @property
     def literal_names(self):
@@ -72,6 +73,21 @@ class Clause(object):
             else:
                 ret |= literal.evaluate(values)
         return ret
+
+    def satisfies_or_none(self, values):
+        """Return True if the clause is satisfied, False if not, None if it
+        cannot be evaluated."""
+        unset_literals = []
+        for literal in self.literals:
+            if literal.name in values:
+                if literal.evaluate(values):
+                    return True
+            else:
+                unset_literals.append(literal)
+        if len(unset_literals) > 0:
+            return None
+        else:
+            return False
 
     def __or__(self, other):
         if isinstance(other, Clause):

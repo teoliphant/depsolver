@@ -41,6 +41,11 @@ class TestClause(unittest.TestCase):
         clause = Clause([a, b])
 
         self.assertEqual(clause.literal_names, set(["a", "b"]))
+        self.assertFalse(clause.is_assertion)
+
+        clause = Clause([a])
+
+        self.assertTrue(clause.is_assertion)
 
     def test_create_from_string(self):
         clause = Clause.from_string("a | b | ~c")
@@ -93,6 +98,15 @@ class TestClause(unittest.TestCase):
         self.assertFalse(clause.evaluate({"a": False, "b": False}))
 
         self.assertRaises(ValueError, lambda: clause.evaluate({"a": False}))
+
+    def test_satisfies_or_none(self):
+        clause = Clause.from_string("a | b")
+
+        self.assertTrue(clause.satisfies_or_none({"a": True}))
+        self.assertTrue(clause.satisfies_or_none({"b": True}))
+        self.assertTrue(clause.satisfies_or_none({}) is None)
+        self.assertTrue(clause.satisfies_or_none({"a": False}) is None)
+        self.assertTrue(clause.satisfies_or_none({"a": False, "b": False}) is False)
 
 class TestSAT(unittest.TestCase):
     def test_simple(self):
