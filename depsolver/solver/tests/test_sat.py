@@ -1,7 +1,7 @@
 import collections
 import unittest
 
-from depsolver.sat \
+from depsolver.solver.sat \
     import \
         Clause, Literal, is_satisfiable
 
