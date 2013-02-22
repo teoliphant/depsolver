@@ -15,7 +15,17 @@ class Literal(object):
     def __init__(self, name):
         if not _IS_VALID_LITERAL.match(name):
             raise ValueError("Invalid literal name: %s" % name)
-        self.name = name
+        self._name = name
+
+    @property
+    def name(self):
+        return self._name
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and self.name == other._name
+
+    def __hash__(self):
+        return hash(repr(self))
 
     def __repr__(self):
         return "L('%s')" % self.name
@@ -55,15 +65,28 @@ class Clause(object):
         return cls(literals)
 
     def __init__(self, literals):
-        self.literals = literals
+        self._literals = frozenset(literals)
+        self._literals_set = frozenset(l.name for l in literals)
+
         self._name_to_literal = dict((literal.name, literal) for literal in literals)
 
-        self._literals_set = set(l.name for l in literals)
-        self.is_assertion = len(literals) == 1
+    @property
+    def is_assertion(self):
+        return len(self._literals) == 1
+
+    @property
+    def literals(self):
+        return self._literals
 
     @property
     def literal_names(self):
         return self._literals_set
+
+    def get_literal(self):
+        if self.is_assertion:
+            return iter(self._literals).next()
+        else:
+            raise ValueError("Cannot get literal from non-assertion clause !")
 
     def evaluate(self, values):
         ret = False
@@ -91,9 +114,13 @@ class Clause(object):
 
     def __or__(self, other):
         if isinstance(other, Clause):
-            return Clause(self.literals + other.literals)
+            literals = set(self.literals)
+            literals.update(other.literals)
+            return Clause(literals)
         elif isinstance(other, Literal):
-            return Clause(self.literals + [other])
+            literals = set([other])
+            literals.update(self.literals)
+            return Clause(literals)
         else:
             raise TypeError("unsupported type %s" % type(other))
 
@@ -101,6 +128,12 @@ class Clause(object):
         def _simple_literal(l):
             return "~%s" % l.name if isinstance(l, Not) else l.name
         return "C({})".format(" | ".join(_simple_literal(l) for l in self.literals))
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and self.literals == other.literals
+
+    def __hash__(self):
+        return hash(self.literals)
 
 def _find_unset_variable(clauses, variables):
     for clause in clauses:

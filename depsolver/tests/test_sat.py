@@ -87,7 +87,7 @@ class TestClause(unittest.TestCase):
         b = ~Literal("b")
         clause = Clause([a, b])
 
-        self.assertEqual(repr(clause), "C(a | ~b)")
+        self.assertEqual(clause, Clause.from_string("a | ~b"))
 
     def test_evaluate(self):
         a = Literal("a")
