@@ -21,6 +21,7 @@ class TestPackage(unittest.TestCase):
 
         package = Package("numpy", V("1.3.0"))
         self.assertEqual(package.provides, r_provides)
+        self.assertEqual(package.dependencies, set())
         self.assertEqual(package.id, r_id)
 
         r_provides = set([R("numpy == 1.3.0")])
@@ -29,3 +30,15 @@ class TestPackage(unittest.TestCase):
         package = Package("nomkl_numpy", V("1.3.0"), provides=r_provides)
         self.assertEqual(package.provides, r_provides)
         self.assertEqual(package.id, r_id)
+
+    def test_unique_name(self):
+        package = Package("numpy", V("1.3.0"))
+        self.assertEqual(package.unique_name, "numpy-1.3.0")
+
+    def test_str(self):
+        package = Package("numpy", V("1.3.0"))
+        self.assertEqual(str(package), "numpy-1.3.0")
+
+    def test_repr(self):
+        package = Package("numpy", V("1.3.0"))
+        self.assertEqual(repr(package), "Package('numpy', Version(1, 3, 0))")

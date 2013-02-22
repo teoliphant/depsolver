@@ -4,6 +4,9 @@ class Package(object):
     def __init__(self, name, version, provides=None, dependencies=None):
         """Create a new package instance.
 
+        PackageInfo instances contain exactly all the metadata needed for the
+        dependency management.
+
         Parameters
         ----------
         name: str
@@ -36,7 +39,7 @@ class Package(object):
         return self.name + "-" + str(self.version)
 
     def __repr__(self):
-        return "Package(%s, %s)" % (self.name, self.version)
+        return "Package(%r, %r)" % (self.name, self.version)
 
     def __str__(self):
-        return "%s-%s" % (self.name, self.version)
+        return self.unique_name
