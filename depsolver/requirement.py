@@ -14,8 +14,33 @@ from depsolver.version \
 V = Version.from_string
 
 class Requirement(object):
+    """Requirements instances represent a 'package requirement', that is a
+    package + version constraints.
+
+    Arguments
+    ---------
+    name: str
+        Package name
+    specs: seq
+        Sequence of constraints
+    """
     @classmethod
     def from_string(cls, requirement_string):
+        """Creates a new Requirement from a requirement string.
+
+        Arguments
+        ---------
+        requirement_string: str
+            The requirement string, e.g. 'numpy >= 1.3.0'
+
+        Examples
+        --------
+
+        # This creates a requirement that will match any version of numpy
+        >>> Requirement.from_string("numpy")
+        # This creates a requirement that will only version of numpy >= 1.3.0
+        >>> Requirement.from_string("numpy >= 1.3.0")
+        """
         parser = RequirementParser()
         requirements = parser.parse(requirement_string)
         if len(requirements) != 1:
@@ -76,7 +101,23 @@ class Requirement(object):
 
     def matches(self, provider):
         """Return True if provider requirement and this requirement are
-        compatible."""
+        compatible.
+
+        Arguments
+        ---------
+        provider: Requirement
+            The requirement to match
+
+        Examples
+        --------
+        >>> req = Requirement.from_string("numpy >= 1.3.0")
+        >>> req.matches(Requirement.from_string("numpy"))
+        True
+        >>> req.matches(Requirement.from_string("numpy >= 1.2.0"))
+        True
+        >>> req.matches(Requirement.from_string("numpy >= 1.4.0"))
+        True
+        """
         if self.name != provider.name:
             return False
         if self._cannot_match:

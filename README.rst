@@ -12,4 +12,4 @@ Its requirements are the following:
         - well tested and documented
 
 The design is strongly inspired from `PHP Composer packager
-<http://getcomposer.org>`_
+<http://getcomposer.org>`_, itself started as a port of libsolver.

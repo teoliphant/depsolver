@@ -143,12 +143,43 @@ class BuildVersion(object):
         return not self <= other
 
 class Version(object):
+    """Create a Version instance
+
+    Version objects represent a full version according to the semantic version
+    specs (version 2.0.0-rc1 of the spec). The main features of this class are
+    validation and version comparison.
+
+    Arguments
+    ---------
+    major: int
+        The major number
+    minor: int
+        The minor number
+    patch: int
+        The patch (or micro) number
+    pre_release: PreReleaseVersion
+        The pre release part of the version
+    build: BuildVersion
+        The build version part of the version
+    """
     @classmethod
-    def from_string(cls, s):
-        if not is_version_valid(s):
-            raise InvalidVersion("Version string %r is not valid" % (s,))
+    def from_string(cls, version_string):
+        """Creates a Version instance from a string specifiction
+
+        Arguments
+        ---------
+        version_string: str
+            The string version
+
+        Examples
+        --------
+        >>> v = Version.from_string("1.3.1")
+        >>> v = Version.from_string("1.3.1-dev2+post1")
+        """
+        if not is_version_valid(version_string):
+            raise InvalidVersion("Version string %r is not valid" % (version_string,))
         else:
-            m = _VERSION_RE.match(s)
+            m = _VERSION_RE.match(version_string)
             version = m.group("version")
             major, minor, patch = version.split(".")
             pre_release = m.group("pre_release")
@@ -162,22 +193,26 @@ class Version(object):
 
     def __init__(self, major, minor, patch, pre_release=None, build=None):
         try:
+            #: The major number version
             self.major = int(major)
         except ValueError:
             raise InvalidVersion("Invalid major version %r" % (major,))
 
         try:
+            #: The minor number version
             self.minor = int(minor)
         except ValueError:
             raise InvalidVersion("Invalid minor version %r" % (minor,))
 
         try:
+            #: The patch number version
             self.patch = int(patch)
         except ValueError:
             raise InvalidVersion("Invalid patch version %r" % (patch,))
 
         if pre_release and not isinstance(pre_release, PreReleaseVersion):
             raise InvalidVersion("pre_release expected to be a PreReleaseVersion instance: %r" % (pre_release,))
+        #: The pre_release number version
         self.pre_release = pre_release
 
         if build and not isinstance(build, BuildVersion):
@@ -238,6 +273,8 @@ class Version(object):
         return self > other or self == other
 
 class MinVersion(Version):
+    """Subclass of Version such as MinVersion() < v for any Version instance v
+    (unless v is MinVersion()."""
     def __init__(self):
         pass
 
@@ -257,6 +294,8 @@ class MinVersion(Version):
         return "MinVersion"
 
 class MaxVersion(Version):
+    """Subclass of Version such as MaxVersion() > v for any Version instance v
+    (unless v is MaxVersion()."""
     def __init__(self):
         pass
 
