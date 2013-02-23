@@ -190,6 +190,8 @@ class TestCreateInstallClauses(unittest.TestCase):
         r_rules.add(Rule.from_string("-numpy-1.7.0 | -numpy-1.6.1", pool))
         r_rules.add(Rule.from_string(
             "-numpy-1.7.0 | mkl-10.1.0 | mkl-10.2.0 | mkl-10.3.0 | mkl-11.0.0", pool))
+        r_rules.add(Rule.from_string(
+            "-numpy-1.6.1 | mkl-10.1.0 | mkl-10.2.0 | mkl-10.3.0 | mkl-11.0.0", pool))
         r_rules.add(Rule.from_string("-mkl-10.1.0 | -mkl-10.2.0", pool))
         r_rules.add(Rule.from_string("-mkl-10.1.0 | -mkl-10.3.0", pool))
         r_rules.add(Rule.from_string("-mkl-10.1.0 | -mkl-11.0.0", pool))

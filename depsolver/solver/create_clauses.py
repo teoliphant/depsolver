@@ -106,7 +106,7 @@ def create_install_rules(pool, req):
             _append_rule(rule)
 
     def _add_dependency_rules(req):
-        provided = pool.what_provides(req)
+        provided = pool.what_provides(req, 'any')
         if len(provided) < 1:
             raise MissingRequirementInPool(req)
         else:
@@ -118,11 +118,12 @@ def create_install_rules(pool, req):
                     _extend_rules(_add_dependency_rules(dependency_req))
             return clauses
 
-    rule = Rule((Literal(p.id) for p in pool.what_provides(req)), pool)
+    provided = pool.what_provides(req, 'include_indirect')
+    rule = Rule((Literal(p.id) for p in provided), pool)
     _append_rule(rule)
     # Add conflicts for every package with the same name to ensure conflicts
     # are generated against installed packages which version is different than
     # the ones provided by the requirement
-    provided = pool.what_provides(Requirement.from_string(req.name))
+    provided = pool.what_provides(req, 'any')
     _extend_rules(iter_conflict_rules(pool, provided))
     return _add_dependency_rules(req)

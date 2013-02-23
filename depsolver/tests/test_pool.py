@@ -51,7 +51,7 @@ class TestPool(unittest.TestCase):
         self.assertEqual(pool.matches(mkl_10_1_0, R("numpy")), False)
         self.assertEqual(pool.matches(nomkl_numpy_1_7_0, R("numpy")), MATCH_PROVIDE)
 
-    def test_what_provides(self):
+    def test_what_provides_simple(self):
         repo1 = Repository([numpy_1_6_0, numpy_1_7_0])
         pool = Pool()
         pool.add_repository(repo1)
@@ -64,3 +64,25 @@ class TestPool(unittest.TestCase):
         pool.add_repository(repo1)
 
         self.assertEqual(pool.what_provides(R("numpy")), [nomkl_numpy_1_7_0])
+
+    def test_what_provides_direct_only(self):
+        repo1 = Repository([nomkl_numpy_1_7_0])
+        pool = Pool()
+        pool.add_repository(repo1)
+
+        self.assertEqual(set(pool.what_provides(R("numpy"))), set([nomkl_numpy_1_7_0]))
+
+    def test_what_provides_include_indirect(self):
+        repo1 = Repository([numpy_1_6_0, numpy_1_7_0, nomkl_numpy_1_7_0])
+        pool = Pool()
+        pool.add_repository(repo1)
+
+        self.assertEqual(pool.what_provides(R("numpy >= 1.6.1")), [numpy_1_7_0])
+        self.assertEqual(set(pool.what_provides(R("numpy"), 'include_indirect')),
+                         set([numpy_1_6_0, numpy_1_7_0, nomkl_numpy_1_7_0]))
+        self.assertEqual(set(pool.what_provides(R("numpy >= 1.6.1"), 'include_indirect')),
+                         set([numpy_1_7_0, nomkl_numpy_1_7_0]))
+        self.assertEqual(set(pool.what_provides(R("numpy >= 1.6.1"), 'direct_only')),
+                         set([numpy_1_7_0]))
+        self.assertEqual(set(pool.what_provides(R("numpy >= 1.6.1"), 'any')),
+                         set([numpy_1_6_0, numpy_1_7_0, nomkl_numpy_1_7_0]))
