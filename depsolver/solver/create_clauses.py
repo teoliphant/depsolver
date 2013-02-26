@@ -20,7 +20,7 @@ V = Version.from_string
 
 class Rule(Clause):
     """A Rule is a clause where literals are package ids attached to a pool.
-    
+
     It essentially allows for pretty-printing package names instead of internal
     ids as used by the SAT solver underneath.
     """
@@ -79,15 +79,20 @@ class Rule(Clause):
 def iter_conflict_rules(pool, packages):
     """Create an iterator that yield every rule to fulfill the constraint that
     each package in the packages list conflicts with each other.
-    
+
+    The generated rules are of the form (-A | -B) for every (A, B) in the
+    packages sequence (C_2^n / 2 = n(n-1)/2 for n packages)
     """
     for left, right in itertools.combinations(packages, 2):
         yield Rule([Not(left.id), Not(right.id)], pool)
 
 def create_depends_rule(pool, package, dependency_req):
     """Creates the rule encoding that package depends on the dependency
-    fulfilled by requirement."""
-    provided_dependencies = pool.what_provides(dependency_req)
+    fulfilled by requirement.
+
+    This dependency is of the form (-A | R1 | R2 | R3) where R* are the set of
+    packages provided by the dependency requirement."""
+    provided_dependencies = pool.what_provides(dependency_req, 'include_indirect')
     return Rule([Not(package.id)] + \
                  [Literal(provided.id) for provided in provided_dependencies], pool)
 
