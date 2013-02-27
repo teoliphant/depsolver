@@ -76,6 +76,7 @@ class Rule(Clause):
             return "-%s" % package if isinstance(l, Not) else "+%s" % str(package)
         return "(%s)" % " | ".join(_simple_literal(l) for l in sorted(self.literals, key=_key))
 
+# FIXME: all that code below is a lot of crap
 def iter_conflict_rules(pool, packages):
     """Create an iterator that yield every rule to fulfill the constraint that
     each package in the packages list conflicts with each other.
@@ -111,11 +112,12 @@ def create_install_rules(pool, req):
             _append_rule(rule)
 
     def _add_dependency_rules(req):
-        provided = pool.what_provides(req, 'any')
+        provided = pool.what_provides(req, 'include_indirect')
         if len(provided) < 1:
             raise MissingRequirementInPool(req)
         else:
-            _extend_rules(iter_conflict_rules(pool, provided))
+            obsolete_provided = pool.what_provides(req, 'any')
+            _extend_rules(iter_conflict_rules(pool, obsolete_provided))
 
             for candidate in provided:
                 for dependency_req in candidate.dependencies:
@@ -123,12 +125,7 @@ def create_install_rules(pool, req):
                     _extend_rules(_add_dependency_rules(dependency_req))
             return clauses
 
-    provided = pool.what_provides(req, 'include_indirect')
+    provided = pool.what_provides(req)
     rule = Rule((Literal(p.id) for p in provided), pool)
     _append_rule(rule)
-    # Add conflicts for every package with the same name to ensure conflicts
-    # are generated against installed packages which version is different than
-    # the ones provided by the requirement
-    provided = pool.what_provides(req, 'any')
-    _extend_rules(iter_conflict_rules(pool, provided))
     return _add_dependency_rules(req)

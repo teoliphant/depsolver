@@ -190,8 +190,6 @@ class TestCreateInstallClauses(unittest.TestCase):
         r_rules.add(Rule.from_string("-numpy-1.7.0 | -numpy-1.6.1", pool))
         r_rules.add(Rule.from_string(
             "-numpy-1.7.0 | mkl-10.1.0 | mkl-10.2.0 | mkl-10.3.0 | mkl-11.0.0", pool))
-        r_rules.add(Rule.from_string(
-            "-numpy-1.6.1 | mkl-10.1.0 | mkl-10.2.0 | mkl-10.3.0 | mkl-11.0.0", pool))
         r_rules.add(Rule.from_string("-mkl-10.1.0 | -mkl-10.2.0", pool))
         r_rules.add(Rule.from_string("-mkl-10.1.0 | -mkl-10.3.0", pool))
         r_rules.add(Rule.from_string("-mkl-10.1.0 | -mkl-11.0.0", pool))
@@ -201,6 +199,25 @@ class TestCreateInstallClauses(unittest.TestCase):
 
         self.assertEqual(r_rules,
                 set(create_install_rules(pool, R("numpy == 1.7.0"))))
+
+    def test_already_installed_indirect_provided(self):
+        # Installed requirement has one dependency with multiple provides for
+        # the same name available in the pool, one of which is already
+        # installed. Here: scipy depends on numpy, nomkl_numpy is also
+        # available and already installed
+        repo = Repository([mkl_11_0_0, nomkl_numpy_1_7_0, numpy_1_7_0, scipy_0_11_0])
+        pool = Pool()
+        pool.add_repository(repo)
+
+        r_rules = set()
+        r_rules.add(Rule.from_string("scipy-0.11.0", pool))
+        r_rules.add(Rule.from_string("-scipy-0.11.0 | numpy-1.7.0 | nomkl_numpy-1.7.0", pool))
+        r_rules.add(Rule.from_string("-numpy-1.7.0 | -nomkl_numpy-1.7.0", pool))
+        r_rules.add(Rule.from_string(
+            "-numpy-1.7.0 | mkl-11.0.0", pool))
+
+        self.assertEqual(r_rules,
+                set(create_install_rules(pool, R("scipy"))))
 
     def test_complex_scenario_1(self):
         repo = Repository([mkl_10_1_0, mkl_10_2_0, mkl_10_3_0, mkl_11_0_0,
