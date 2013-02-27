@@ -1,3 +1,6 @@
+.. image:: https://secure.travis-ci.org/enthought/depsolver.png
+    :alt: Travis CI Build Status
+
 This is a prototype for a decent dependency solver for python.
 
 Example::
