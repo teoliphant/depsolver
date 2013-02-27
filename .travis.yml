@@ -4,7 +4,7 @@ python:
 install:
    - pip install nose coverage
 script:
-  - nosetests --with-coverage --cover-package=depsolver depsolver
+  - nosetests --with-coverage --cover-package=depsolver --cover-inclusive depsolver
 notifications:
   email:
     - davidc@enthought.com
