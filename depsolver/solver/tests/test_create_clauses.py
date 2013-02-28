@@ -18,10 +18,10 @@ from depsolver.version \
 
 from depsolver.solver.create_clauses \
     import \
-        create_depends_rule, create_install_rules, iter_conflict_rules, Rule
-from depsolver.solver.sat \
+        create_depends_rule, create_install_rules, iter_conflict_rules
+from depsolver.solver.rule \
     import \
-        Not, Literal as L
+        Literal, Not, Rule
 
 V = Version.from_string
 R = Requirement.from_string
@@ -76,7 +76,7 @@ class TestRule(unittest.TestCase):
         self.assertEqual(rule, Rule.from_packages([mkl_10_2_0, mkl_11_0_0], self.pool))
 
         rule = Rule.from_string("-mkl-10.2.0 | mkl-11.0.0", self.pool)
-        self.assertEqual(rule, Rule([Not(mkl_10_2_0.id), L(mkl_11_0_0.id)], self.pool))
+        self.assertEqual(rule, Rule([Not(mkl_10_2_0.id), Literal(mkl_11_0_0.id)], self.pool))
 
         rule = Rule.from_string("-mkl-10.2.0 | -mkl-11.0.0", self.pool)
         self.assertEqual(rule, Rule([Not(mkl_10_2_0.id), Not(mkl_11_0_0.id)], self.pool))

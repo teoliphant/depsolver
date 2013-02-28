@@ -9,7 +9,7 @@ from depsolver.operations \
 from depsolver.solver.create_clauses \
     import \
         create_install_rules
-from depsolver.solver.sat \
+from depsolver.solver.rule \
     import \
         Not
 

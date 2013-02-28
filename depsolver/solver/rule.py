@@ -1,6 +1,11 @@
 import re
 
-from collections import OrderedDict
+from depsolver.package \
+    import \
+        Package
+from depsolver.version \
+    import \
+        Version
 
 _IS_VALID_LITERAL = re.compile("[a-zA-Z_0-9][-+.\w\d]*")
 
@@ -135,54 +140,61 @@ class Clause(object):
     def __hash__(self):
         return hash(self.literals)
 
-def _find_unset_variable(clauses, variables):
-    for clause in clauses:
-        for l in clause.literal_names:
-            if not l in variables:
-                return l
-    return None
+class Rule(Clause):
+    """A Rule is a clause where literals are package ids attached to a pool.
 
-def _try_evaluate(clauses, variables):
-    unset = _find_unset_variable(clauses, variables)
-    if unset is not None:
-        variables[unset] = True
-        is_satisfiable, new_variables = _try_evaluate(clauses, variables)
-        if is_satisfiable:
-            return is_satisfiable, new_variables
-        else:
-            variables[unset] = False
-            is_satisfiable, new_variables = _try_evaluate(clauses, variables)
-            if is_satisfiable:
-                return is_satisfiable, new_variables
-            else:
-                variables.popitem()
-                return False, variables
-    else:
-        for clause in clauses:
-            if not clause.evaluate(variables):
-                return False, variables
-        return True, variables
-
-def is_satisfiable(clauses, variables=None):
-    """A naive back-tracking implementation of SAT solver.
-    
-    Parameters
-    ----------
-    clauses: set
-        Set of clauses instance. The set is considered as a conjunction of
-        clauses
-    variables: mapping
-        OrderedDict containing pre-defined variables -> boolean.
-
-    Returns
-    -------
-    satisfiability: bool
-        True if the given instance is satisfiable
-    variables: mapping
-        If satisfiable, gives one found solution. The solution is a simple
-        mapping variable name -> boolean.
+    It essentially allows for pretty-printing package names instead of internal
+    ids as used by the SAT solver underneath.
     """
-    if variables is None:
-        variables = OrderedDict()
-    result, result_variables = _try_evaluate(clauses, variables)
-    return result, dict(result_variables)
+    @classmethod
+    def from_string(cls, packages_string, pool):
+        literals = []
+        for package_string in packages_string.split("|"):
+            package_string = package_string.strip()
+            if package_string.startswith("-"):
+                is_not = True
+                _, name, version = package_string.split("-", 2)
+            else:
+                is_not = False
+                name, version = package_string.split("-")
+            package = Package(name, Version.from_string(version))
+            if is_not:
+                literals.append(Not(package.id))
+            else:
+                literals.append(Literal(package.id))
+        return cls(literals, pool)
+
+    @classmethod
+    def from_packages(cls, packages, pool):
+        return cls((Literal(p.id) for p in packages), pool)
+
+    def __init__(self, literals, pool):
+        self._pool = pool
+        super(Rule, self).__init__(literals)
+
+    def __or__(self, other):
+        if isinstance(other, Rule):
+            literals = set(self.literals)
+            literals.update(other.literals)
+            return Rule(literals, self._pool)
+        elif isinstance(other, Literal):
+            literals = set([other])
+            literals.update(self.literals)
+            return Rule(literals, self._pool)
+        else:
+            raise TypeError("unsupported type %s" % type(other))
+
+    def __repr__(self):
+        # FIXME: this is moronic
+        def _key(l):
+            package = self._pool.package_by_id(l.name)
+            if isinstance(l, Not):
+                # XXX: insert \0 byte to force not package to appear before
+                return "\0" + str(package)
+            else:
+                return str(package)
+        def _simple_literal(l):
+            package = self._pool.package_by_id(l.name)
+            return "-%s" % package if isinstance(l, Not) else "+%s" % str(package)
+        return "(%s)" % " | ".join(_simple_literal(l) for l in sorted(self.literals, key=_key))
+

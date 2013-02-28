@@ -3,78 +3,9 @@ import itertools
 from depsolver.errors \
     import \
         MissingRequirementInPool
-from depsolver.package \
+from depsolver.solver.rule \
     import \
-        Package
-from depsolver.requirement \
-    import \
-        Requirement
-from depsolver.solver.sat \
-    import \
-        Clause, Not, Literal
-from depsolver.version \
-    import \
-        Version
-
-V = Version.from_string
-
-class Rule(Clause):
-    """A Rule is a clause where literals are package ids attached to a pool.
-
-    It essentially allows for pretty-printing package names instead of internal
-    ids as used by the SAT solver underneath.
-    """
-    @classmethod
-    def from_string(cls, packages_string, pool):
-        literals = []
-        for package_string in packages_string.split("|"):
-            package_string = package_string.strip()
-            if package_string.startswith("-"):
-                is_not = True
-                _, name, version = package_string.split("-", 2)
-            else:
-                is_not = False
-                name, version = package_string.split("-")
-            package = Package(name, V(version))
-            if is_not:
-                literals.append(Not(package.id))
-            else:
-                literals.append(Literal(package.id))
-        return cls(literals, pool)
-
-    @classmethod
-    def from_packages(cls, packages, pool):
-        return cls((Literal(p.id) for p in packages), pool)
-
-    def __init__(self, literals, pool):
-        self._pool = pool
-        super(Rule, self).__init__(literals)
-
-    def __or__(self, other):
-        if isinstance(other, Rule):
-            literals = set(self.literals)
-            literals.update(other.literals)
-            return Rule(literals, self._pool)
-        elif isinstance(other, Literal):
-            literals = set([other])
-            literals.update(self.literals)
-            return Rule(literals, self._pool)
-        else:
-            raise TypeError("unsupported type %s" % type(other))
-
-    def __repr__(self):
-        # FIXME: this is moronic
-        def _key(l):
-            package = self._pool.package_by_id(l.name)
-            if isinstance(l, Not):
-                # XXX: insert \0 byte to force not package to appear before
-                return "\0" + str(package)
-            else:
-                return str(package)
-        def _simple_literal(l):
-            package = self._pool.package_by_id(l.name)
-            return "-%s" % package if isinstance(l, Not) else "+%s" % str(package)
-        return "(%s)" % " | ".join(_simple_literal(l) for l in sorted(self.literals, key=_key))
+        Literal, Not, Rule
 
 # FIXME: all that code below is a lot of crap
 def iter_conflict_rules(pool, packages):
