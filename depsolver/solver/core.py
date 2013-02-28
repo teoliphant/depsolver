@@ -9,60 +9,57 @@ from depsolver.operations \
 from depsolver.solver.create_clauses \
     import \
         create_install_rules
+from depsolver.solver.policy \
+    import \
+        Policy
 from depsolver.solver.rule \
     import \
         Not
 
-def _is_unit(clause, variables):
-    false_literals = []
-    can_be_infered = None
-    for literal in clause.literals:
-        if literal.name in variables and not literal.evaluate(variables):
-            false_literals.append(literal)
-        elif not literal.name in variables:
-            can_be_infered = literal
-
-    if len(false_literals) == len(clause.literals):
-        return True, None
-    elif len(false_literals) == len(clause.literals) - 1:
-        return True, can_be_infered
-    else:
-        return False, None
-
 def infer_literal(variables, literal):
+    """Set the literal corresponding variable to the value such as the literal
+    is True."""
+    if literal.name in variables:
+        raise DepSolverError("Internal error: inferring a literal already decided !")
     if isinstance(literal, Not):
         variables[literal.name] = False
     else:
         variables[literal.name] = True
 
-def _run_unit_propagation(clauses, variables):
-    # Unit propagatation
+def run_unit_propagation(clauses, variables):
+    """Run unit propagation, i.e. for each unit clause, infer the corresponding
+    literal and remove the clause from the clauses set.
+    """
     iterate_over = clauses[:]
     for clause in iterate_over:
-        is_unit, can_be_infered = _is_unit(clause, variables)
+        is_unit, can_be_infered = clause.is_unit(variables)
         if is_unit:
-            #print "%s is a unit clause: pruned and used to infer %s" % (clause, can_be_infered)
             infer_literal(variables, can_be_infered)
-            new_clauses = []
-            for _clause in clauses:
-                satisfied_or_none = _clause.satisfies_or_none(variables)
-                if satisfied_or_none is None:
-                    new_clauses.append(_clause)
-                elif satisfied_or_none is False:
-                    raise DepSolverError("Bug in unit propagation ?")
-            #print "Pruned %d clauses" % (len(clauses) - len(new_clauses))
-            clauses = new_clauses
+            clauses = prune_satisfied_clauses(clauses, variables)
+            if clauses is None:
+                raise DepSolverError("Bug in unit propagation ?")
 
     return clauses
 
-def _prune_clauses(clauses, variables):
-    # Return clauses \ {clause; clause already satifsies}
-    # It also detects whether one clause evaluates to False, in which case it
-    # returns None
+def prune_satisfied_clauses(clauses, variables):
+    """Remove any clause that is already satisfied (i.e. is True) from the
+    given clause set.
+
+    Parameters
+    ----------
+    clauses: seq
+        Sequence of clauses
+    variables: dict
+        variable name -> bool mapping
+
+    Returns
+    -------
+    clauses: seq or None
+        Sequence of clauses that are not yet satisfied. If None, it means at
+        least one clause could not be satisfied
+    """
     new_clauses = []
 
-    # Prune clauses that are known to be already satisfied and detect if one
-    # clause evaluates to False
     for clause in clauses:
         evaluated_or_none = clause.satisfies_or_none(variables)
         if evaluated_or_none is None:
@@ -72,16 +69,13 @@ def _prune_clauses(clauses, variables):
 
     return new_clauses
 
-def _run_prune_pure_literals(clauses, variables):
+def prune_pure_literals(clauses, variables):
     new_clauses = []
     for clause in clauses:
         if len(clause.literals) == 1:
             literal = clause.literals[0]
             assert not literal.name in variables
-            if isinstance(literal, Not):
-                variables[literal.name] = False
-            else:
-                variables[literal.name] = True
+            infer_literal(variables, literal)
         else:
             new_clauses.append(clause)
 
@@ -91,52 +85,18 @@ def _run_dpll_iteration(clauses, variables):
     # Return (should_continue, clauses) where:
     #   - should_continue is a bool on whether to continue or not
     #   - clauses is a set of clauses
-    new_clauses = _prune_clauses(clauses, variables)
+    new_clauses = prune_satisfied_clauses(clauses, variables)
     if new_clauses is None:
         return False, clauses
-
-    clauses = new_clauses
-    new_clauses = _run_unit_propagation(clauses, variables)
-
-    clauses = new_clauses
-    new_clauses = _run_prune_pure_literals(clauses, variables)
-
-    return True, new_clauses
-
-def _compute_operations(pool, variables, installed_repo,
-        id_to_installed_package, id_to_updated_package):
-    operations = []
-
-    update_package_ids = set()
-    for literal_name, literal_value in variables.iteritems():
-        if literal_value is True and not literal_name in id_to_installed_package:
-            package = pool.package_by_id(literal_name)
-            if installed_repo.has_package_name(package.name):
-                to_update_packages = installed_repo.find_packages(package.name)
-                assert len(to_update_packages) == 1
-                to_update_package = to_update_packages[0]
-                update_package_ids.add(to_update_package.id)
-                operations.append(Update(to_update_package, pool.package_by_id(literal_name)))
-            else:
-                operations.append(Install(pool.package_by_id(literal_name)))
-
-    for literal_name, literal_value in variables.iteritems():
-        if literal_value is False and literal_name in id_to_installed_package and \
-                not literal_name in update_package_ids:
-            operations.append(Remove(pool.package_by_id(literal_name)))
-
-    operations.reverse()
-    return operations
+    else:
+        new_clauses = run_unit_propagation(new_clauses, variables)
+        new_clauses = prune_pure_literals(new_clauses, variables)
+        return True, new_clauses
 
 def decide_from_assertion_rules(clauses, variables):
     for clause in clauses:
         if clause.is_assertion:
-            literal = clause.get_literal()
-            assert not literal.name in variables
-            if isinstance(literal, Not):
-                variables[literal.name] = False
-            else:
-                variables[literal.name] = True
+            infer_literal(variables, clause.get_literal())
 
 def prune_to_best_version(pool, package_ids):
     # Assume package_ids is already sorted (from max to min)
@@ -185,101 +145,143 @@ def select_new_candidate(pool, policy, decision_queue, id_to_installed_package):
         else:
             return candidates
 
-def solve_job_clauses(clauses, job_clauses, pool, variables,
-        id_to_installed_package, id_to_updated_package, policy):
-    for job_clause in job_clauses:
-        is_satisfied_or_none = job_clause.satisfies_or_none(variables)
+class Solver(object):
+    def __init__(self, pool, installed_repository, policy=None):
+        self.pool = pool
+        self.installed_repository = installed_repository
 
-        if is_satisfied_or_none is True:
-            continue
-        if is_satisfied_or_none is False:
-            continue
+        if policy is None:
+            policy = Policy()
+        self.policy = policy
 
-        decision_queue = set(literal \
-                for literal in job_clause.literals \
-                if not literal.name in variables)
+        self._id_to_installed_package = dict((p.id, p) for p in
+                                             installed_repository.iter_packages())
+        self._id_to_updated_package = {}
 
-        if len(id_to_updated_package) > 0:
-            raise NotImplementedError("update not yet implemented")
-        if len(id_to_installed_package) > 0:
-            old_decision_queue = decision_queue
-            decision_queue = []
-            for literal in job_clause.literals:
-                if literal.name in id_to_updated_package:
-                    decision_queue = old_decision_queue
+    def _run_dpll(self, clauses, variables):
+        while True:
+            clause = clauses[0]
+            satisfied_or_none = clause.satisfies_or_none(variables)
+            if satisfied_or_none is True:
+                clauses = clauses[1:]
+                if len(clauses) < 1:
                     break
-                if literal.name in id_to_installed_package:
-                    decision_queue.append(literal)
-        if len(decision_queue) < 1:
-            continue
+                else:
+                    continue
+            if satisfied_or_none is False:
+                raise DepSolverError("Impossible situation ! And yet, it happned... (SAT bug ?)")
 
-        candidates = select_new_candidate(pool, policy, decision_queue, id_to_installed_package)
-        # Consider new candidate installed
-        assert len(candidates) == 1
-        candidate = candidates[0]
-        assert not candidate in variables
-        variables[candidate] = True
-        status, new_clauses = _run_dpll_iteration(clauses, variables)
-        if status is False:
-            raise NotImplementedError("Unsolvable job")
-        else:
-            clauses = new_clauses
-
-    return clauses
-
-def solve(pool, req, installed_repo, policy):
-    id_to_installed_package = dict((p.id, p) for p in installed_repo.iter_packages())
-    id_to_updated_package = {}
-
-    clauses = create_install_rules(pool, req)
-    job_clauses = clauses[:1]
-
-    def _remove_duplicate(seq):
-        _s = set()
-        return [item for item in seq if not item in _s and not _s.add(item)]
-    clauses = _remove_duplicate(clauses)
-
-    variables = collections.OrderedDict()
-    decide_from_assertion_rules(clauses, variables)
-
-    # Handle job rules
-    clauses = solve_job_clauses(clauses, job_clauses, pool, variables,
-            id_to_installed_package, id_to_updated_package, policy)
-
-    if len(clauses) == 0:
-        return _compute_operations(pool, variables, installed_repo,
-            id_to_installed_package, id_to_updated_package)
-
-    while True:
-        clause = clauses[0]
-        satisfied_or_none = clause.satisfies_or_none(variables)
-        if satisfied_or_none is True:
-            clauses = clauses[1:]
-            if len(clauses) < 1:
-                break
-            else:
-                continue
-        if satisfied_or_none is False:
-            raise DepSolverError("Impossible situation ! And yet, it happned... (SAT bug ?)")
-
-        # TODO: function to find out set of undecided literals of a clause
-        decision_queue = list(literal for literal in clause.literals if not
-                literal.name in variables)
-        candidates = select_new_candidate(pool, policy, decision_queue, id_to_installed_package)
-        assert len(candidates) == 1
-        candidate = candidates[0]
-        assert not candidate in variables
-        variables[candidate] = True
-        status, new_clauses = _run_dpll_iteration(clauses, variables)
-        if status is False:
-            variables[candidate] = False
+            # TODO: function to find out set of undecided literals of a clause
+            decision_queue = list(literal for literal in clause.literals if not
+                    literal.name in variables)
+            candidates = select_new_candidate(self.pool, self.policy,
+                    decision_queue, self._id_to_installed_package)
+            assert len(candidates) == 1
+            candidate = candidates[0]
+            assert not candidate in variables
+            variables[candidate] = True
             status, new_clauses = _run_dpll_iteration(clauses, variables)
             if status is False:
-                variables.popitem()
-        else:
-            clauses = new_clauses
-            if len(clauses) == 0:
-                break
+                variables[candidate] = False
+                status, new_clauses = _run_dpll_iteration(clauses, variables)
+                if status is False:
+                    variables.popitem()
+            else:
+                clauses = new_clauses
+                if len(clauses) == 0:
+                    break
 
-    return _compute_operations(pool, variables, installed_repo,
-            id_to_installed_package, id_to_updated_package)
+    def _solve_job_clauses(self, clauses, job_clauses, variables):
+        for job_clause in job_clauses:
+            is_satisfied_or_none = job_clause.satisfies_or_none(variables)
+
+            if is_satisfied_or_none is True:
+                continue
+            if is_satisfied_or_none is False:
+                continue
+
+            decision_queue = set(literal \
+                    for literal in job_clause.literals \
+                    if not literal.name in variables)
+
+            if len(self._id_to_updated_package) > 0:
+                raise NotImplementedError("update not yet implemented")
+            if len(self._id_to_installed_package) > 0:
+                old_decision_queue = decision_queue
+                decision_queue = []
+                for literal in job_clause.literals:
+                    if literal.name in self._id_to_updated_package:
+                        decision_queue = old_decision_queue
+                        break
+                    if literal.name in self._id_to_installed_package:
+                        decision_queue.append(literal)
+            if len(decision_queue) < 1:
+                continue
+
+            candidates = select_new_candidate(self.pool, self.policy, decision_queue,
+                    self._id_to_installed_package)
+            # Consider new candidate installed
+            assert len(candidates) == 1
+            candidate = candidates[0]
+            assert not candidate in variables
+            variables[candidate] = True
+            status, new_clauses = _run_dpll_iteration(clauses, variables)
+            if status is False:
+                raise NotImplementedError("Unsolvable job")
+            else:
+                clauses = new_clauses
+
+        return clauses
+
+    def solve(self, requirement):
+        """Compute the set of operations to fulfill the given requirement.
+
+        Parameters
+        ----------
+        requirement: Requirement
+            The requirement to fulfill
+
+        Returns
+        --------
+        operations: seq
+            List of operations to apply to the system to fulfill the requirement.
+        """
+        clauses = create_install_rules(self.pool, requirement)
+        job_clauses = clauses[:1]
+
+        variables = collections.OrderedDict()
+        decide_from_assertion_rules(clauses, variables)
+
+        clauses = self._solve_job_clauses(clauses, job_clauses, variables)
+
+        if len(clauses) > 0:
+            self._run_dpll(clauses, variables)
+
+        return self._compute_operations(variables)
+
+    def _compute_operations(self, variables):
+        """Build the sequence of operations corresponding to the given
+        variables."""
+        operations = []
+
+        update_package_ids = set()
+        for literal_name, literal_value in variables.iteritems():
+            if literal_value is True and not literal_name in self._id_to_installed_package:
+                package = self.pool.package_by_id(literal_name)
+                if self.installed_repository.has_package_name(package.name):
+                    to_update_packages = self.installed_repository.find_packages(package.name)
+                    assert len(to_update_packages) == 1
+                    to_update_package = to_update_packages[0]
+                    update_package_ids.add(to_update_package.id)
+                    operations.append(Update(to_update_package,
+                                             self.pool.package_by_id(literal_name)))
+                else:
+                    operations.append(Install(self.pool.package_by_id(literal_name)))
+
+        for literal_name, literal_value in variables.iteritems():
+            if literal_value is False and literal_name in self._id_to_installed_package and \
+                    not literal_name in update_package_ids:
+                operations.append(Remove(self.pool.package_by_id(literal_name)))
+
+        operations.reverse()
+        return operations

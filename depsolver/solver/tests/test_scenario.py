@@ -18,7 +18,7 @@ from depsolver.version \
 
 from depsolver.solver.core \
     import \
-        solve, Install, Update
+        Install, Solver, Update
 from depsolver.solver.policy \
     import \
         Policy
@@ -42,6 +42,10 @@ scipy_0_11_0 = Package("scipy", V("0.11.0"), dependencies=[R("numpy >= 1.6.0")])
 scipy_0_12_0 = Package("scipy", V("0.12.0"), dependencies=[R("numpy >= 1.7.0")])
 
 policy = Policy()
+
+def solve(pool, requirement, installed_repository, policy):
+    solver = Solver(pool, installed_repository, policy)
+    return solver.solve(requirement)
 
 class TestSimpleScenario(unittest.TestCase):
     """Scenario with no dependencies."""

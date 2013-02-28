@@ -140,6 +140,49 @@ class Clause(object):
     def __hash__(self):
         return hash(self.literals)
 
+    def is_unit(self, variables):
+        """Computes whether this clause is decidable with the given variables,
+        and if so, return the variable that can be decided.
+
+        A clause is a unit if all literals but one are False for the given
+        variables. If this is the case, the last literal has to be True for the
+        clause to be True, and hence
+
+        Parameters
+        ----------
+        variables: dict
+            variable name -> bool mapping
+
+        Returns
+        -------
+        is_unit: bool
+            True if the rule is a unit, False otherwise
+        inferred: Literal or None
+            If not None, a literal instance representing the literal that can
+            be inferred. If is_unit is True and inferred is None, it means the
+            clause cannot be True with the given variables.
+
+        Example
+        -------
+        >>> a = Clause.from_string("A | ~B | ~C")
+        >>> a.is_unit({"B": True, "C": True})
+        (True, Literal("A"))
+        """
+        false_literals = []
+        can_be_infered = None
+        for literal in self.literals:
+            if literal.name in variables and not literal.evaluate(variables):
+                false_literals.append(literal)
+            elif not literal.name in variables:
+                can_be_infered = literal
+
+        if len(false_literals) == len(self.literals):
+            return True, None
+        elif len(false_literals) == len(self.literals) - 1:
+            return True, can_be_infered
+        else:
+            return False, None
+
 class Rule(Clause):
     """A Rule is a clause where literals are package ids attached to a pool.
 
@@ -197,4 +240,3 @@ class Rule(Clause):
             package = self._pool.package_by_id(l.name)
             return "-%s" % package if isinstance(l, Not) else "+%s" % str(package)
         return "(%s)" % " | ".join(_simple_literal(l) for l in sorted(self.literals, key=_key))
-
