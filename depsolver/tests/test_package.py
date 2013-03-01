@@ -57,12 +57,12 @@ class TestPackageFromString(unittest.TestCase):
 
     def test_dependencies(self):
         r_package = Package("numpy", V("1.6.0"), dependencies=[R("mkl >= 10.3.0")])
-        package = Package.from_string("numpy-1.6.0, depends (mkl >= 10.3.0)")
+        package = Package.from_string("numpy-1.6.0; depends (mkl >= 10.3.0)")
 
         self.assertEqual(package, r_package)
 
     def test_provides(self):
         r_package = Package("nomkl_numpy", V("1.6.0"), provides=[R("numpy == 1.6.0")])
-        package = Package.from_string("nomkl_numpy-1.6.0, provides (numpy == 1.6.0)")
+        package = Package.from_string("nomkl_numpy-1.6.0; provides (numpy == 1.6.0)")
 
         self.assertEqual(package, r_package)

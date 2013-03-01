@@ -35,7 +35,7 @@ def _parse_requirements_string(s):
         return requirements
 
 def parse_package_string(package_string):
-    parts = package_string.split(",")
+    parts = package_string.split(";")
 
     if len(parts) < 1:
         raise ValueError("YO")
