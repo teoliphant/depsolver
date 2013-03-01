@@ -43,7 +43,10 @@ class TestPackage(unittest.TestCase):
 
     def test_repr(self):
         package = Package("numpy", V("1.3.0"))
-        self.assertEqual(repr(package), "Package('numpy', Version(1, 3, 0))")
+        self.assertEqual(repr(package), "Package('numpy-1.3.0')")
+
+        package = Package("numpy", V("1.6.0"), dependencies=[R("mkl >= 10.3.0")])
+        self.assertEqual(repr(package), "Package('numpy-1.6.0, depends (mkl >= 10.3.0)')")
 
 class TestPackageFromString(unittest.TestCase):
     def test_simple(self):

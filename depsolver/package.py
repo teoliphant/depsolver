@@ -62,14 +62,13 @@ class Package(object):
     def from_string(cls, package_string):
         """Create a new package from a string.
 
-        Can only construct package instances without provides, dependencies,
-        etc... for now.
-
         Example
         -------
+        >>> P = Package.from_string
         >>> numpy_1_3_0 = Package("numpy", Version.from_string("1.3.0"))
-        >>> Package.from_string("numpy-1.3.0") == numpy_1_3_0
+        >>> P("numpy-1.3.0") == numpy_1_3_0
         True
+        >>> P("numpy-1.3.0, depends (mkl >= 10.3.0, mkl <= 10.4.0)")
         """
         name, version, provides, dependencies = parse_package_string(package_string)
         return cls(name, version, provides, dependencies)
@@ -112,7 +111,12 @@ class Package(object):
         return self.name + "-" + str(self.version)
 
     def __repr__(self):
-        return "Package(%r, %r)" % (self.name, self.version)
+        strings = ["%s-%s" % (self.name, self.version)]
+        if self.dependencies:
+            strings.append("depends (%s)" % ", ".join(str(s) for s in self.dependencies))
+        if self.provides:
+            strings.append("provides (%s)" % ", ".join(str(s) for s in self.provides))
+        return "Package(%r)" % ", ".join(strings)
 
     def __str__(self):
         return self.unique_name
