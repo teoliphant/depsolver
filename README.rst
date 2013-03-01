@@ -6,11 +6,8 @@ This is a prototype for a decent dependency solver for python.
 Example::
 
     # Install numpy
-    V = Version.from_string
-    R = Requirement.from_string
-
-    numpy_1_6_1 = Package("numpy", V("1.6.1"))
-    numpy_1_7_0 = Package("numpy", V("1.7.0"))
+    numpy_1_6_1 = Package.from_string("numpy-1.6.1")
+    numpy_1_7_0 = Package.from_string("numpy-1.7.0")
 
     repo = Repository([numpy_1_6_1, numpy_1_7_0])
 
