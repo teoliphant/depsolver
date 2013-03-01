@@ -98,53 +98,6 @@ def decide_from_assertion_rules(clauses, variables):
         if clause.is_assertion:
             infer_literal(variables, clause.get_literal())
 
-def prune_to_best_version(pool, package_ids):
-    # Assume package_ids is already sorted (from max to min)
-    if len(package_ids) < 1:
-        return []
-    else:
-        best_package = pool.package_by_id(package_ids[0])
-        best_version_only = [package_ids[0]]
-        for package_id in package_ids[1:]:
-            package = pool.package_by_id(package_id)
-            if package.version < best_package.version:
-                break
-            else:
-                best_version_only.append(package_id)
-
-        return best_version_only
-
-def select_new_candidate(pool, policy, decision_queue, id_to_installed_package):
-    literal_ids = (l.name for l in decision_queue)
-    package_queues = \
-        policy._compute_prefered_packages_installed_first(pool,
-                id_to_installed_package, literal_ids)
-
-    def package_id_to_version(package_id):
-        package = pool.package_by_id(package_id)
-        return package.version
-
-    for package_name, package_queue in package_queues.iteritems():
-        sorted_package_queue = sorted(package_queue, key=package_id_to_version)[::-1]
-        package_queues[package_name] = sorted_package_queue
-
-    for package_name, package_queue in package_queues.iteritems():
-        package_queues[package_name] = prune_to_best_version(pool, package_queue)
-
-    if len(package_queues) > 1:
-        raise NotImplementedError("More than one package name in select " \
-                                  "and install not supported yet")
-    else:
-        try:
-            candidates = package_queues.itervalues().next()
-        except StopIteration:
-            raise DepSolverError("No candidate in package_queues ?")
-        if len(candidates) > 1:
-            raise NotImplementedError("More than one package in select " \
-                                      "and install not supported yet")
-        else:
-            return candidates
-
 class Solver(object):
     def __init__(self, pool, installed_repository, policy=None):
         self.pool = pool
@@ -172,10 +125,11 @@ class Solver(object):
                 raise DepSolverError("Impossible situation ! And yet, it happned... (SAT bug ?)")
 
             # TODO: function to find out set of undecided literals of a clause
-            decision_queue = list(literal for literal in clause.literals if not
+            decision_queue = list(literal.name for literal in clause.literals if not
                     literal.name in variables)
-            candidates = select_new_candidate(self.pool, self.policy,
-                    decision_queue, self._id_to_installed_package)
+            candidates = self.policy.prefered_package_ids(self.pool,
+                    self._id_to_installed_package,
+                    decision_queue)
             assert len(candidates) == 1
             candidate = candidates[0]
             assert not candidate in variables
@@ -218,8 +172,8 @@ class Solver(object):
             if len(decision_queue) < 1:
                 continue
 
-            candidates = select_new_candidate(self.pool, self.policy, decision_queue,
-                    self._id_to_installed_package)
+            candidates = self.policy.prefered_package_ids(self.pool,
+                    self._id_to_installed_package, [l.name for l in decision_queue])
             # Consider new candidate installed
             assert len(candidates) == 1
             candidate = candidates[0]
