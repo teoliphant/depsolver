@@ -113,6 +113,8 @@ class Solver(object):
 
     def _run_dpll(self, clauses, variables):
         while True:
+            if len(clauses) == 0:
+                break
             clause = clauses[0]
             satisfied_or_none = clause.satisfies_or_none(variables)
             if satisfied_or_none is True:
@@ -124,26 +126,10 @@ class Solver(object):
             if satisfied_or_none is False:
                 raise DepSolverError("Impossible situation ! And yet, it happned... (SAT bug ?)")
 
-            # TODO: function to find out set of undecided literals of a clause
+            # TODO: add function to find out set of undecided literals of a clause
             decision_queue = list(literal.name for literal in clause.literals if not
                     literal.name in variables)
-            candidates = self.policy.prefered_package_ids(self.pool,
-                    self._id_to_installed_package,
-                    decision_queue)
-            assert len(candidates) == 1
-            candidate = candidates[0]
-            assert not candidate in variables
-            variables[candidate] = True
-            status, new_clauses = _run_dpll_iteration(clauses, variables)
-            if status is False:
-                variables[candidate] = False
-                status, new_clauses = _run_dpll_iteration(clauses, variables)
-                if status is False:
-                    variables.popitem()
-            else:
-                clauses = new_clauses
-                if len(clauses) == 0:
-                    break
+            clauses = self._select_and_install(clause, clauses, decision_queue, variables)
 
     def _solve_job_clauses(self, clauses, job_clauses, variables):
         for job_clause in job_clauses:
@@ -172,18 +158,31 @@ class Solver(object):
             if len(decision_queue) < 1:
                 continue
 
-            candidates = self.policy.prefered_package_ids(self.pool,
-                    self._id_to_installed_package, [l.name for l in decision_queue])
-            # Consider new candidate installed
-            assert len(candidates) == 1
-            candidate = candidates[0]
+            clauses = self._select_and_install(job_clause, clauses,
+                    [l.name for l in decision_queue],
+                    variables)
+
+        return clauses
+
+    def _select_and_install(self, clause, clauses, decision_queue, variables):
+        candidates = self.policy.prefered_package_ids(self.pool,
+                self._id_to_installed_package,
+                decision_queue)
+        while len(candidates) > 0:
+            candidate = candidates.popleft()
             assert not candidate in variables
             variables[candidate] = True
             status, new_clauses = _run_dpll_iteration(clauses, variables)
             if status is False:
-                raise NotImplementedError("Unsolvable job")
+                variables[candidate] = False
+                status, new_clauses = _run_dpll_iteration(clauses, variables)
+                if status is False:
+                    # FIXME: refactor solver parts that needs backtracking (and
+                    # actuall implement backtracking !)
+                    raise NotImplementedError("Backtracking not implemented yet")
             else:
                 clauses = new_clauses
+                break
 
         return clauses
 
