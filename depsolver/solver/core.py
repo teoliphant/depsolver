@@ -11,7 +11,7 @@ from depsolver.solver.create_clauses \
         create_install_rules
 from depsolver.solver.policy \
     import \
-        Policy
+        DefaultPolicy
 from depsolver.solver.rule \
     import \
         Not
@@ -104,7 +104,7 @@ class Solver(object):
         self.installed_repository = installed_repository
 
         if policy is None:
-            policy = Policy()
+            policy = DefaultPolicy()
         self.policy = policy
 
         self._id_to_installed_package = dict((p.id, p) for p in

@@ -5,11 +5,19 @@ import six
 from depsolver.errors \
     import \
         DepSolverError
+from depsolver.version \
+    import \
+        MaxVersion
 
-class Policy(object):
-    """Policy classes implement a specific policy to deal with multiple
-    solutions to the SAT problem (which version to select when multiple are
-    available, etc...)."""
+class DefaultPolicy(object):
+    """A Policy class that implements 'reasonable' defaults.
+
+    Its behavior is:
+
+        1. when multiple candidates are available, pick up the highest version first
+        2. if a package is already installed, it takes precendence over higher
+        version (over-ruling 1.)
+    """
     def _compute_prefered_packages_installed_first(self, pool, installed_map, package_ids):
         """Returns a package name -> package queue mapping, with each queue
         being priority-sorted.
@@ -36,16 +44,19 @@ class Policy(object):
 
         return package_name_to_package_ids
 
-    def prefered_package_ids(self, pool, installed_map, package_ids):
-        """Return a list of preferred package ids to install for the given package
-        ids list."""
+    def prefered_package_ids(self, pool, installed_map, decision_queue):
+        """Return a list of preferred package ids to install for the given
+        package ids list, sorted by priority (from highest to lowest)."""
         package_queues = \
             self._compute_prefered_packages_installed_first(pool, installed_map,
-                package_ids)
+                decision_queue)
 
         def package_id_to_version(package_id):
-            package = pool.package_by_id(package_id)
-            return package.version
+            if package_id in installed_map:
+                return MaxVersion()
+            else:
+                package = pool.package_by_id(package_id)
+                return package.version
 
         for package_name, package_queue in package_queues.items():
             sorted_package_queue = sorted(package_queue, key=package_id_to_version)[::-1]
@@ -62,11 +73,7 @@ class Policy(object):
                 candidates = six.next(iter(package_queues.values()))
             except StopIteration:
                 raise DepSolverError("No candidate in package_queues ?")
-            if len(candidates) > 1:
-                raise NotImplementedError("More than one package in select " \
-                                          "and install not supported yet")
-            else:
-                return candidates
+            return collections.deque(candidates)
 
 def prune_to_best_version(pool, package_ids):
     # Assume package_ids is already sorted (from max to min)

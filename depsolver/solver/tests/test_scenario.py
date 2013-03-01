@@ -21,7 +21,7 @@ from depsolver.solver.core \
         Install, Solver, Update
 from depsolver.solver.policy \
     import \
-        Policy
+        DefaultPolicy
 
 V = Version.from_string
 R = Requirement.from_string
@@ -41,7 +41,7 @@ scipy_0_10_1 = Package("scipy", V("0.10.1"), dependencies=[R("numpy >= 1.6.0")])
 scipy_0_11_0 = Package("scipy", V("0.11.0"), dependencies=[R("numpy >= 1.6.0")])
 scipy_0_12_0 = Package("scipy", V("0.12.0"), dependencies=[R("numpy >= 1.7.0")])
 
-policy = Policy()
+policy = DefaultPolicy()
 
 def solve(pool, requirement, installed_repository, policy):
     solver = Solver(pool, installed_repository, policy)
