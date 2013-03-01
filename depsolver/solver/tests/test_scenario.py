@@ -127,8 +127,6 @@ class TestOneLevel(unittest.TestCase):
         operations = solve(pool, R("numpy"), installed_repo, policy)
         self.assertEqual(operations, [Install(numpy_1_7_0)])
 
-    # FIXME: dependencies updated even if older version already satisfies it.
-    @unittest.expectedFailure
     def test_dependency_already_provided_but_older(self):
         """Numpy depends on MKL, older MKL already installed."""
         repo = Repository([mkl_10_2_0, mkl_10_3_0, mkl_11_0_0, numpy_1_6_0, numpy_1_7_0])
