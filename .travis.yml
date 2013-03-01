@@ -4,7 +4,7 @@ python:
    - 3.2
    - 3.3
 install:
-   - pip install nose coverage
+   - pip install nose coverage six
 script:
   - nosetests --with-coverage --cover-package=depsolver --cover-inclusive depsolver
 notifications:
