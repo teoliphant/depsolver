@@ -126,3 +126,6 @@ class Package(object):
         return self.name == other.name and self.version == other.version \
                 and self.provides == other.provides \
                 and self.dependencies == other.dependencies
+
+    def __hash__(self):
+        return hash(repr(self))
