@@ -26,6 +26,11 @@ Repository object
 Requirement-related functionalities
 -----------------------------------
 
+Requirement objects represent a name + a set of constraints that have to be
+match for that requirement to be considered fulfilled.
+
+Typically, it will be a version constraint, e.g. 'numpy >= 1.6.0'.
+
 .. currentmodule:: depsolver.requirement
 
 .. autoclass:: Requirement

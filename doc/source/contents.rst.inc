@@ -9,6 +9,16 @@ method, this part of the documentation is for you.
 
    api
 
+TODO
+----
+
+Remaining tasks
+
+.. toctree::
+   :maxdepth: 2
+
+   todo
+
 Additional Notes
 ----------------
 
