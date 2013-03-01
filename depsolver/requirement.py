@@ -97,7 +97,10 @@ class Requirement(object):
         return ", ".join(r)
 
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        return repr(self) == repr(other)
+
+    def __hash__(self):
+        return hash(repr(self))
 
     def matches(self, provider):
         """Return True if provider requirement and this requirement are
@@ -144,7 +147,7 @@ class RequirementParser(object):
         self._parser = RawRequirementParser()
 
     def iter_parse(self, requirement_string):
-        for distribution_name, specs in self._parser.parse(requirement_string).iteritems():
+        for distribution_name, specs in self._parser.parse(requirement_string).items():
             yield Requirement(distribution_name, specs)
 
     def parse(self, requirement_string):

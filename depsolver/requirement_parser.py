@@ -1,6 +1,8 @@
 import collections
 import re
 
+import six
+
 from depsolver.errors \
     import \
         DepSolverError
@@ -70,13 +72,13 @@ def iter_over_requirement(tokens):
     """
     while True:
         block = []
-        token = tokens.next()
+        token = six.next(tokens)
         try:
             while not isinstance(token, CommaToken):
                 block.append(token)
-                token = tokens.next()
+                token = six.next(tokens)
             yield block
-        except StopIteration, e:
+        except StopIteration as e:
             yield block
             raise e
 

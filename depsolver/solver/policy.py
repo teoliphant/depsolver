@@ -1,5 +1,7 @@
 import collections
 
+import six
+
 from depsolver.errors \
     import \
         DepSolverError
@@ -45,11 +47,11 @@ class Policy(object):
             package = pool.package_by_id(package_id)
             return package.version
 
-        for package_name, package_queue in package_queues.iteritems():
+        for package_name, package_queue in package_queues.items():
             sorted_package_queue = sorted(package_queue, key=package_id_to_version)[::-1]
             package_queues[package_name] = sorted_package_queue
 
-        for package_name, package_queue in package_queues.iteritems():
+        for package_name, package_queue in package_queues.items():
             package_queues[package_name] = prune_to_best_version(pool, package_queue)
 
         if len(package_queues) > 1:
@@ -57,7 +59,7 @@ class Policy(object):
                                       "and install not supported yet")
         else:
             try:
-                candidates = package_queues.itervalues().next()
+                candidates = six.next(iter(package_queues.values()))
             except StopIteration:
                 raise DepSolverError("No candidate in package_queues ?")
             if len(candidates) > 1:

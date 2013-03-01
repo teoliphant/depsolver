@@ -219,7 +219,7 @@ class Solver(object):
         operations = []
 
         update_package_ids = set()
-        for literal_name, literal_value in variables.iteritems():
+        for literal_name, literal_value in variables.items():
             if literal_value is True and not literal_name in self._id_to_installed_package:
                 package = self.pool.package_by_id(literal_name)
                 if self.installed_repository.has_package_name(package.name):
@@ -232,7 +232,7 @@ class Solver(object):
                 else:
                     operations.append(Install(self.pool.package_by_id(literal_name)))
 
-        for literal_name, literal_value in variables.iteritems():
+        for literal_name, literal_value in variables.items():
             if literal_value is False and literal_name in self._id_to_installed_package and \
                     not literal_name in update_package_ids:
                 operations.append(Remove(self.pool.package_by_id(literal_name)))

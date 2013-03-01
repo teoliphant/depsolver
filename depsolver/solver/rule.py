@@ -1,5 +1,7 @@
 import re
 
+import six
+
 from depsolver.package \
     import \
         Package
@@ -89,7 +91,7 @@ class Clause(object):
 
     def get_literal(self):
         if self.is_assertion:
-            return iter(self._literals).next()
+            return six.next(iter(self._literals))
         else:
             raise ValueError("Cannot get literal from non-assertion clause !")
 

@@ -32,7 +32,7 @@ class Repository(object):
         ----
         Order is undefined.
         """
-        return self._id_to_package.itervalues()
+        return self._id_to_package.values()
 
     def list_packages(self):
         """Return the list of every package contained in this repo.
