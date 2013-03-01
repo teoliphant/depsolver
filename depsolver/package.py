@@ -1,6 +1,30 @@
 import hashlib
 
+from depsolver.version \
+    import \
+        Version
+
 class Package(object):
+    @classmethod
+    def from_string(cls, package_string):
+        """Create a new package from a string.
+
+        Can only construct package instances without provides, dependencies,
+        etc... for now.
+
+        Example
+        -------
+        >>> numpy_1_3_0 = Package("numpy", Version.from_string("1.3.0"))
+        >>> Package.from_string("numpy-1.3.0") == numpy_1_3_0
+        True
+        """
+        parts = package_string.strip().split("-", 1)
+        if len(parts) < 2:
+            raise ValueError("Invalid package string %s" % package_string)
+        else:
+            name, version_string = parts
+            return cls(name, Version.from_string(version_string))
+
     def __init__(self, name, version, provides=None, dependencies=None):
         """Create a new package instance.
 
@@ -43,3 +67,8 @@ class Package(object):
 
     def __str__(self):
         return self.unique_name
+
+    def __eq__(self, other):
+        return self.name == other.name and self.version == other.version \
+                and self.provides == other.provides \
+                and self.dependencies == other.dependencies

@@ -44,3 +44,9 @@ class TestPackage(unittest.TestCase):
     def test_repr(self):
         package = Package("numpy", V("1.3.0"))
         self.assertEqual(repr(package), "Package('numpy', Version(1, 3, 0))")
+
+    def test_from_string(self):
+        r_package = Package("numpy", V("1.3.0"))
+
+        self.assertEqual(Package.from_string("numpy-1.3.0"), r_package)
+        self.assertRaises(ValueError, lambda: Package.from_string("numpy 1.3.0"))
