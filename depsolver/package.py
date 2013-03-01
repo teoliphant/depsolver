@@ -68,7 +68,8 @@ class Package(object):
         >>> numpy_1_3_0 = Package("numpy", Version.from_string("1.3.0"))
         >>> P("numpy-1.3.0") == numpy_1_3_0
         True
-        >>> P("numpy-1.3.0, depends (mkl >= 10.3.0, mkl <= 10.4.0)")
+        >>> P("numpy-1.3.0; depends (mkl >= 10.3.0, mkl <= 10.4.0)")
+        Package('numpy-1.3.0, depends (mkl >= 10.3.0, mkl <= 10.4.0)')
         """
         name, version, provides, dependencies = parse_package_string(package_string)
         return cls(name, version, provides, dependencies)

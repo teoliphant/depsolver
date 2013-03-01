@@ -128,13 +128,11 @@ class Pool(object):
 
         Examples
         --------
-        >>> from depsolver.version import Version
-        >>> from depsolver.requirement import Requirement
+        >>> from depsolver import Package, Requirement
         >>> R = Requirement.from_string
-        >>> V = Version.from_string
         >>> pool = Pool()
-        >>> pool.matches(Package('numpy', V('1.3.0')), R('numpy >= 1.2.0'))
-        MATCH
+        >>> pool.matches(Package.from_string('numpy-1.3.0'), R('numpy >= 1.2.0')) == MATCH
+        True
         """
         if requirement.name == candidate.name:
             candidate_requirement_string = "%s == %s" % (candidate.name, candidate.version)

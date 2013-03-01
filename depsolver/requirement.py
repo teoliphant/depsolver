@@ -38,8 +38,11 @@ class Requirement(object):
 
         # This creates a requirement that will match any version of numpy
         >>> Requirement.from_string("numpy")
+        numpy *
+
         # This creates a requirement that will only version of numpy >= 1.3.0
         >>> Requirement.from_string("numpy >= 1.3.0")
+        numpy >= 1.3.0
         """
         parser = RequirementParser()
         requirements = parser.parse(requirement_string)

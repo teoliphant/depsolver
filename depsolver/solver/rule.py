@@ -168,7 +168,7 @@ class Clause(object):
         -------
         >>> a = Clause.from_string("A | ~B | ~C")
         >>> a.is_unit({"B": True, "C": True})
-        (True, Literal("A"))
+        (True, L('A'))
         """
         false_literals = []
         can_be_infered = None
