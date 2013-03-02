@@ -63,6 +63,31 @@ class TestVersion(unittest.TestCase):
             version = V(r_version_string)
             self.assertEqual(str(version), r_version_string)
 
+    def test_from_loose_string(self):
+        r_version = Version(1, 2, 0)
+        version = Version.from_loose_string("1.2")
+
+        self.assertEqual(r_version, version)
+
+        r_version = Version(1, 0, 0)
+        version = Version.from_loose_string("1")
+
+        r_version = Version(1, 2, 0, build=BuildVersion.from_string("123"))
+        version = Version.from_loose_string("1.2+123")
+
+        self.assertEqual(r_version, version)
+
+        r_version = Version(1, 2, 0, pre_release=PreReleaseVersion.from_string("123"))
+        version = Version.from_loose_string("1.2-123")
+
+        self.assertEqual(r_version, version)
+
+        r_version = Version(1, 2, 0, PreReleaseVersion.from_string("123"),
+                            BuildVersion.from_string("456"))
+        version = Version.from_loose_string("1.2-123+456")
+
+        self.assertEqual(r_version, version)
+
 class TestVersionComparison(unittest.TestCase):
     def test_simple_eq(self):
         self.assertTrue(V("1.2.0") == V("1.2.0"))

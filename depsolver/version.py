@@ -17,6 +17,13 @@ _VERSION_RE = re.compile(r"""
         (\+(?P<build>[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?         # build part (optional)
         $""", re.VERBOSE)
 
+_LOOSE_VERSION_RE = re.compile(r"""
+        ^
+        (?P<version>\d+(\.\d+)*)                                 # minimum 'Major' (mandatory)
+        (-(?P<pre_release>[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?    # pre-release part (optional)
+        (\+(?P<build>[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?         # build part (optional)
+        $""", re.VERBOSE)
+
 _PRE_RELEASE_VERSION_RE = re.compile(r"""
         ^
         ({part})(\.{part})*
@@ -168,6 +175,34 @@ class Version(object):
     build: BuildVersion
         The build version part of the version
     """
+    @classmethod
+    def from_loose_string(cls, version_string):
+        m = _LOOSE_VERSION_RE.match(version_string)
+        if m is None:
+            raise InvalidVersion("Version string %s is not a valid loose string" % (version_string,))
+        else:
+            version = m.group("version")
+            ndots = version.count(".")
+            if ndots == 2:
+                major, minor, patch = version.split(".")
+            elif ndots == 1:
+                major, minor = version.split(".")
+                patch = '0'
+            else:
+                major = version
+                minor = '0'
+                patch = '0'
+
+            pre_release = m.group("pre_release")
+            if pre_release is not None:
+                pre_release = PreReleaseVersion.from_string(pre_release)
+
+            build = m.group("build")
+            if build is not None:
+                build = BuildVersion.from_string(build)
+
+            return cls(major, minor, patch, pre_release, build)
+
     @classmethod
     def from_string(cls, version_string):
         """Creates a Version instance from a string specifiction

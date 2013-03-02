@@ -13,13 +13,16 @@ V = Version.from_string
 
 _SECTION_RE = re.compile("(depends|provides)\s*\((.*)\)")
 
-def _parse_name_version_part(name_version):
+def _parse_name_version_part(name_version, loose):
     parts = name_version.strip().split("-", 1)
     if len(parts) < 2:
         raise ValueError("Invalid package string %s" % name_version)
     else:
         name, version_string = parts
-        version = V(version_string)
+        if loose:
+            version = Version.from_loose_string(version_string)
+        else:
+            version = V(version_string)
 
         return name, version
 
@@ -34,13 +37,13 @@ def _parse_requirements_string(s):
             requirements.add(R(requirement_string))
         return requirements
 
-def parse_package_string(package_string):
+def parse_package_string(package_string, loose=False):
     parts = package_string.split(";")
 
     if len(parts) < 1:
         raise ValueError("YO")
 
-    name, version = _parse_name_version_part(parts[0])
+    name, version = _parse_name_version_part(parts[0], loose)
 
     dependencies = None
     provides = None
@@ -58,6 +61,11 @@ def parse_package_string(package_string):
     return name, version, provides, dependencies
 
 class Package(object):
+    @classmethod
+    def from_loose_string(cls, package_string):
+        name, version, provides, dependencies = parse_package_string(package_string, loose=True)
+        return cls(name, version, provides, dependencies)
+
     @classmethod
     def from_string(cls, package_string):
         """Create a new package from a string.
