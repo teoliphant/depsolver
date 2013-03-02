@@ -38,7 +38,7 @@ class Literal(object):
         return "L('%s')" % self.name
 
     def __or__(self, other):
-        return Clause([self, other])
+        return Rule([self, other])
 
     def __invert__(self):
         return Not(self.name)
@@ -56,7 +56,7 @@ class Not(Literal):
     def evaluate(self, values):
         return not super(Not, self).evaluate(values)
 
-class Clause(object):
+class Rule(object):
     @classmethod
     def from_string(cls, clause_string):
         literals = []
@@ -120,14 +120,14 @@ class Clause(object):
             return False
 
     def __or__(self, other):
-        if isinstance(other, Clause):
+        if isinstance(other, Rule):
             literals = set(self.literals)
             literals.update(other.literals)
-            return Clause(literals)
+            return Rule(literals)
         elif isinstance(other, Literal):
             literals = set([other])
             literals.update(self.literals)
-            return Clause(literals)
+            return Rule(literals)
         else:
             raise TypeError("unsupported type %s" % type(other))
 
@@ -166,7 +166,7 @@ class Clause(object):
 
         Example
         -------
-        >>> a = Clause.from_string("A | ~B | ~C")
+        >>> a = Rule.from_string("A | ~B | ~C")
         >>> a.is_unit({"B": True, "C": True})
         (True, L('A'))
         """
@@ -185,7 +185,7 @@ class Clause(object):
         else:
             return False, None
 
-class PackageRule(Clause):
+class PackageRule(Rule):
     """A Rule is a clause where literals are package ids attached to a pool.
 
     It essentially allows for pretty-printing package names instead of internal

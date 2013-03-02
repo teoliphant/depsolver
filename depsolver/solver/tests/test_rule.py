@@ -3,7 +3,7 @@ import unittest
 
 from depsolver.solver.rule \
     import \
-        Clause, Literal
+        Rule, Literal
 
 def expected_failure_if(condition):
     def dec(f):
@@ -42,26 +42,26 @@ class TestLiteral(unittest.TestCase):
         self.assertTrue(clause.evaluate({"a": False, "b": True}))
         self.assertFalse(clause.evaluate({"a": False, "b": False}))
 
-class TestClause(unittest.TestCase):
+class TestRule(unittest.TestCase):
     def test_simple(self):
         a = Literal("a")
         b = Literal("b")
-        clause = Clause([a, b])
+        clause = Rule([a, b])
 
         self.assertEqual(clause.literal_names, set(["a", "b"]))
         self.assertFalse(clause.is_assertion)
 
-        clause = Clause([a])
+        clause = Rule([a])
 
         self.assertTrue(clause.is_assertion)
 
     def test_create_from_string(self):
-        clause = Clause.from_string("a | b | ~c")
+        clause = Rule.from_string("a | b | ~c")
 
         self.assertEqual(clause.literal_names, set(["a", "b", "c"]))
         self.assertTrue(clause.evaluate({"a": False, "b": False, "c": False}))
 
-        clause = Clause.from_string("a | b | c")
+        clause = Rule.from_string("a | b | c")
 
         self.assertEqual(clause.literal_names, set(["a", "b", "c"]))
         self.assertFalse(clause.evaluate({"a": False, "b": False, "c": False}))
@@ -69,18 +69,18 @@ class TestClause(unittest.TestCase):
     def test_or(self):
         a = Literal("a")
         b = Literal("b")
-        clause = Clause([a, b])
+        clause = Rule([a, b])
         clause |= Literal("c")
 
         self.assertEqual(clause.literal_names, set(["a", "b", "c"]))
 
         a = Literal("a")
         b = Literal("b")
-        clause = Clause([a, b])
+        clause = Rule([a, b])
 
         c = Literal("c")
         d = Literal("d")
-        clause |= Clause([c, d])
+        clause |= Rule([c, d])
 
         self.assertEqual(clause.literal_names, set(["a", "b", "c", "d"]))
 
@@ -90,20 +90,20 @@ class TestClause(unittest.TestCase):
     def test_repr(self):
         a = Literal("a")
         b = Literal("b")
-        clause = Clause([a, b])
+        clause = Rule([a, b])
 
         self.assertEqual(repr(clause), "C(a | b)")
 
         a = Literal("a")
         b = ~Literal("b")
-        clause = Clause([a, b])
+        clause = Rule([a, b])
 
-        self.assertEqual(clause, Clause.from_string("a | ~b"))
+        self.assertEqual(clause, Rule.from_string("a | ~b"))
 
     def test_evaluate(self):
         a = Literal("a")
         b = Literal("b")
-        clause = Clause([a, b])
+        clause = Rule([a, b])
 
         self.assertTrue(clause.evaluate({"a": True, "b": True}))
         self.assertFalse(clause.evaluate({"a": False, "b": False}))
@@ -111,7 +111,7 @@ class TestClause(unittest.TestCase):
         self.assertRaises(ValueError, lambda: clause.evaluate({"a": False}))
 
     def test_satisfies_or_none(self):
-        clause = Clause.from_string("a | b")
+        clause = Rule.from_string("a | b")
 
         self.assertTrue(clause.satisfies_or_none({"a": True}))
         self.assertTrue(clause.satisfies_or_none({"b": True}))
