@@ -44,6 +44,20 @@ class TestPool(unittest.TestCase):
         self.assertEqual(mkl_10_2_0, pool.package_by_id(mkl_10_2_0.id))
         self.assertRaises(MissingPackageInPool, lambda: pool.package_by_id(mkl_10_3_0.id))
 
+    def test_simple2(self):
+        repo = Repository([mkl_10_1_0, mkl_10_2_0])
+        pool = Pool([repo])
+
+        self.assertEqual(mkl_10_1_0, pool.package_by_id(mkl_10_1_0.id))
+        self.assertEqual(mkl_10_2_0, pool.package_by_id(mkl_10_2_0.id))
+        self.assertRaises(MissingPackageInPool, lambda: pool.package_by_id(mkl_10_3_0.id))
+
+    def test_has_package(self):
+        pool = Pool([Repository([mkl_10_1_0, mkl_10_2_0])])
+
+        self.assertTrue(pool.has_package(mkl_10_1_0))
+        self.assertFalse(pool.has_package(mkl_11_0_0))
+
     def test_add_repository(self):
         """Ensures we do not add the same package twice."""
         repo1 = Repository([mkl_10_1_0, mkl_10_2_0])

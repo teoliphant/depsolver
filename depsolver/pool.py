@@ -17,11 +17,19 @@ class Pool(object):
     Pools are able to find packages that provide a given requirements (handling
     the provides concept from package metadata).
     """
-    def __init__(self):
+    def __init__(self, repositories=None):
         self._id_to_package = {}
 
         # provide.name -> package.id mapping
         self._provide_name_to_ids = collections.defaultdict(set)
+
+        if repositories:
+            for repository in repositories:
+                self.add_repository(repository)
+
+    def has_package(self, package):
+        package_id = package.id
+        return package_id in self._id_to_package
 
     def add_repository(self, repository):
         """Add a repository to this pool.
