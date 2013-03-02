@@ -185,7 +185,7 @@ class Clause(object):
         else:
             return False, None
 
-class Rule(Clause):
+class PackageRule(Clause):
     """A Rule is a clause where literals are package ids attached to a pool.
 
     It essentially allows for pretty-printing package names instead of internal
@@ -215,17 +215,17 @@ class Rule(Clause):
 
     def __init__(self, literals, pool):
         self._pool = pool
-        super(Rule, self).__init__(literals)
+        super(PackageRule, self).__init__(literals)
 
     def __or__(self, other):
-        if isinstance(other, Rule):
+        if isinstance(other, PackageRule):
             literals = set(self.literals)
             literals.update(other.literals)
-            return Rule(literals, self._pool)
+            return PackageRule(literals, self._pool)
         elif isinstance(other, Literal):
             literals = set([other])
             literals.update(self.literals)
-            return Rule(literals, self._pool)
+            return PackageRule(literals, self._pool)
         else:
             raise TypeError("unsupported type %s" % type(other))
 
