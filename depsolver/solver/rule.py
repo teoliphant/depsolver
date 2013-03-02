@@ -2,6 +2,9 @@ import re
 
 import six
 
+from depsolver.errors \
+    import \
+        MissingPackageInPool
 from depsolver.package \
     import \
         Package
@@ -185,8 +188,48 @@ class Rule(object):
         else:
             return False, None
 
+class PackageLiteral(Literal):
+    """A Literal whose name is a package id attached to a pool."""
+    @classmethod
+    def from_string(cls, literal_string, pool):
+        if literal_string.startswith("-"):
+            is_not = True
+            _, name, version = literal_string.split("-", 2)
+        else:
+            is_not = False
+            name, version = literal_string.split("-")
+        package = Package(name, Version.from_string(version))
+        if not pool.has_package(package):
+            raise MissingPackageInPool(package)
+        if is_not:
+            return PackageNot(package.id, pool)
+        else:
+            return PackageLiteral(package.id, pool)
+
+    @classmethod
+    def from_package(cls, package, pool):
+        return cls(package.id, pool)
+
+    def __init__(self, name, pool):
+        super(PackageLiteral, self).__init__(name)
+        self._pool = pool
+
+    def __repr__(self):
+        return str(self._pool.package_by_id(self.name))
+
+    def __or__(self, other):
+        if not self._pool == other._pool:
+            raise ValueError("Cannot or pakage literals which don't share the same pool.")
+        else:
+            return PackageRule([self, other], self._pool)
+
+class PackageNot(PackageLiteral, Not):
+    def __repr__(self):
+        package = self._pool.package_by_id(self.name)
+        return "-%s" % package
+
 class PackageRule(Rule):
-    """A Rule is a clause where literals are package ids attached to a pool.
+    """A Rule where literals are package ids attached to a pool.
 
     It essentially allows for pretty-printing package names instead of internal
     ids as used by the SAT solver underneath.
@@ -195,23 +238,12 @@ class PackageRule(Rule):
     def from_string(cls, packages_string, pool):
         literals = []
         for package_string in packages_string.split("|"):
-            package_string = package_string.strip()
-            if package_string.startswith("-"):
-                is_not = True
-                _, name, version = package_string.split("-", 2)
-            else:
-                is_not = False
-                name, version = package_string.split("-")
-            package = Package(name, Version.from_string(version))
-            if is_not:
-                literals.append(Not(package.id))
-            else:
-                literals.append(Literal(package.id))
+            literals.append(PackageLiteral.from_string(package_string.strip(), pool))
         return cls(literals, pool)
 
     @classmethod
     def from_packages(cls, packages, pool):
-        return cls((Literal(p.id) for p in packages), pool)
+        return cls((PackageLiteral.from_package(p, pool) for p in packages), pool)
 
     def __init__(self, literals, pool):
         self._pool = pool

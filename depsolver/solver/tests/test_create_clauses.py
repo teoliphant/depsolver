@@ -18,7 +18,7 @@ from depsolver.solver.create_clauses \
         create_depends_rule, create_install_rules, iter_conflict_rules
 from depsolver.solver.rule \
     import \
-        Literal, Not, PackageRule
+        PackageLiteral, PackageNot, PackageRule
 
 P = Package.from_string
 R = Requirement.from_string
@@ -54,7 +54,7 @@ class TestPackageRule(unittest.TestCase):
 
     def test_or(self):
         rule = PackageRule.from_packages([mkl_10_1_0, mkl_10_2_0], self.pool)
-        rule |= Not(mkl_11_0_0.id)
+        rule |= PackageNot.from_package(mkl_11_0_0, self.pool)
 
         self.assertTrue(rule.literals, set([mkl_11_0_0.id, mkl_10_1_0.id, mkl_10_2_0.id]))
 
@@ -62,7 +62,7 @@ class TestPackageRule(unittest.TestCase):
         rule_repr = repr(PackageRule.from_packages([mkl_11_0_0, mkl_10_1_0, mkl_10_2_0], self.pool))
         self.assertEqual(rule_repr, "(+mkl-10.1.0 | +mkl-10.2.0 | +mkl-11.0.0)")
 
-        rule_repr = repr(PackageRule([Not(mkl_10_2_0.id)], self.pool) \
+        rule_repr = repr(PackageRule([PackageNot.from_package(mkl_10_2_0, self.pool)], self.pool) \
                 | PackageRule.from_packages([mkl_11_0_0], self.pool))
         self.assertEqual(rule_repr, "(-mkl-10.2.0 | +mkl-11.0.0)")
 
@@ -74,10 +74,15 @@ class TestPackageRule(unittest.TestCase):
         self.assertEqual(rule, PackageRule.from_packages([mkl_10_2_0, mkl_11_0_0], self.pool))
 
         rule = PackageRule.from_string("-mkl-10.2.0 | mkl-11.0.0", self.pool)
-        self.assertEqual(rule, PackageRule([Not(mkl_10_2_0.id), Literal(mkl_11_0_0.id)], self.pool))
+        self.assertEqual(rule,
+                PackageRule([PackageNot.from_package(mkl_10_2_0, self.pool),
+                             PackageLiteral.from_package(mkl_11_0_0, self.pool)], self.pool))
 
         rule = PackageRule.from_string("-mkl-10.2.0 | -mkl-11.0.0", self.pool)
-        self.assertEqual(rule, PackageRule([Not(mkl_10_2_0.id), Not(mkl_11_0_0.id)], self.pool))
+        self.assertEqual(rule,
+                PackageRule([PackageNot.from_package(mkl_10_2_0, self.pool),
+                             PackageNot.from_package(mkl_11_0_0, self.pool)],
+                            self.pool))
 
 class TestCreateClauses(unittest.TestCase):
     def setUp(self):
