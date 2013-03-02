@@ -11,6 +11,6 @@ class MissingRequirementInPool(DepSolverError):
         self.message = "This pool does not have any package for requirement %s" % requirement
 
 class MissingPackageInPool(DepSolverError):
-    def __init__(self, package_id):
-        self.requested_id = package_id
-        self.message = "This pool does not have any package with id %s" % package_id
+    def __init__(self, package_or_package_id):
+        self.requested_package_or_id = package_or_package_id
+        self.message = "This pool does not have any package %r" % package_or_package_id
