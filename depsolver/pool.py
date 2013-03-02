@@ -21,7 +21,7 @@ class Pool(object):
         self._id_to_package = {}
 
         # provide.name -> package.id mapping
-        self._provide_name_to_ids = collections.defaultdict(list)
+        self._provide_name_to_ids = collections.defaultdict(set)
 
     def add_repository(self, repository):
         """Add a repository to this pool.
@@ -34,9 +34,9 @@ class Pool(object):
         for package in repository.iter_packages():
             self._id_to_package[package.id] = package
 
-            self._provide_name_to_ids[package.name].append(package.id)
+            self._provide_name_to_ids[package.name].add(package.id)
             for provide in package.provides:
-                self._provide_name_to_ids[provide.name].append(package.id)
+                self._provide_name_to_ids[provide.name].add(package.id)
 
     def package_by_id(self, package_id):
         """Retrieve a package from its id.
