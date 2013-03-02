@@ -60,6 +60,9 @@ class PreReleaseVersion(object):
     def __repr__(self):
         return "PreReleaseVersion(%s)" % (", ".join(repr(part) for part in self.parts))
 
+    def __str__(self):
+        return "-%s" % ("-".join(str(part) for part in self.parts))
+
     # Comparison API
     def _ensure_can_compare(self, other):
         if other and not isinstance(other, PreReleaseVersion):
@@ -109,6 +112,9 @@ class BuildVersion(object):
 
     def __repr__(self):
         return "BuildVersion(%s)" % (", ".join(repr(part) for part in self.parts))
+
+    def __str__(self):
+        return "+%s" % ("+".join(str(part) for part in self.parts))
 
     # Comparison API
     def _ensure_can_compare(self, other):
@@ -241,9 +247,9 @@ class Version(object):
     def __str__(self):
         s = "%s.%s.%s" % (self.major, self.minor, self.patch)
         if self.pre_release:
-            s += "-%r" % (self.pre_release,)
+            s += str(self.pre_release)
         if self.build:
-            s += "+%r" % (self.build,)
+            s += str(self.build)
         return s
 
     # Comparison API

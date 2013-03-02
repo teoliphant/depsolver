@@ -48,7 +48,7 @@ class TestVersion(unittest.TestCase):
 
         self.assertRaises(Exception, lambda: V("1.2.a"))
 
-    def test_string_representation(self):
+    def test_repr(self):
         r_data = [
                 (V("1.2.0"), "Version(1, 2, 0)"),
                 (V("1.2.0-alpha"), "Version(1, 2, 0, PreReleaseVersion('alpha'))"),
@@ -56,6 +56,12 @@ class TestVersion(unittest.TestCase):
                 ]
         for version, r_version_string in r_data:
             self.assertEqual(repr(version), r_version_string)
+
+    def test_str(self):
+        r_version_strings = ["1.2.0", "1.2.0-alpha", "1.2.0+build"]
+        for r_version_string in r_version_strings:
+            version = V(r_version_string)
+            self.assertEqual(str(version), r_version_string)
 
 class TestVersionComparison(unittest.TestCase):
     def test_simple_eq(self):
