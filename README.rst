@@ -5,19 +5,23 @@ This is a prototype for a decent dependency solver for python.
 
 Example::
 
-    # Install numpy
+    # Simple scenario: nothing installed, install numpy, 2 versions available
+    # in the repository
+    from depsolver import Package, Pool, Repository, Requirement, Solver
+
     numpy_1_6_1 = Package.from_string("numpy-1.6.1")
     numpy_1_7_0 = Package.from_string("numpy-1.7.0")
 
     repo = Repository([numpy_1_6_1, numpy_1_7_0])
 
-    pool = Pool()
-    pool.add_repository(repo)
+    pool = Pool([repo])
 
     installed_repo = Repository()
 
-    # only one operation here: install numpy 1.7.0
-    operations = solve(pool, req, installed_repo, Policy())
+    # only one operation here: install numpy 1.7.0 (most recent available
+    # version)
+    requirement = Requirement.from_string("numpy")
+    operations = Solver(pool, installed_repo).solve(requirement)
 
 More complex scenarios are also supported, e.g.:
 
