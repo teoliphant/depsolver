@@ -75,26 +75,24 @@ class Rule(object):
         return cls(literals)
 
     def __init__(self, literals):
-        self._literals = frozenset(literals)
-        self._literals_set = tuple(sorted(l.name for l in self._literals))
+        def key(literal):
+            # FIXME: hack to sort not literal before the others
+            if isinstance(literal, Not):
+                return "\0%s" % literal.name
+            else:
+                return literal.name
+        self.literals = tuple(sorted(set(literals), key=key))
+        self.literal_names = tuple(l.name for l in self.literals)
 
         self._name_to_literal = dict((literal.name, literal) for literal in literals)
 
     @property
     def is_assertion(self):
-        return len(self._literals) == 1
-
-    @property
-    def literals(self):
-        return self._literals
-
-    @property
-    def literal_names(self):
-        return self._literals_set
+        return len(self.literals) == 1
 
     def get_literal(self):
         if self.is_assertion:
-            return six.next(iter(self._literals))
+            return six.next(iter(self.literals))
         else:
             raise ValueError("Cannot get literal from non-assertion clause !")
 

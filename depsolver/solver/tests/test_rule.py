@@ -49,7 +49,7 @@ class TestRule(unittest.TestCase):
     def test_create_from_string(self):
         clause = Rule.from_string("a | b | ~c")
 
-        self.assertEqual(clause.literal_names, ("a", "b", "c"))
+        self.assertEqual(clause.literal_names, ("c", "a", "b"))
         self.assertTrue(clause.evaluate({"a": False, "b": False, "c": False}))
 
         clause = Rule.from_string("a | b | c")
