@@ -77,7 +77,7 @@ class Package(object):
         >>> P("numpy-1.3.0") == numpy_1_3_0
         True
         >>> P("numpy-1.3.0; depends (mkl >= 10.3.0, mkl <= 10.4.0)")
-        Package('numpy-1.3.0, depends (mkl >= 10.3.0, mkl <= 10.4.0)')
+        Package('numpy-1.3.0; depends (mkl >= 10.3.0, mkl <= 10.4.0)')
         """
         name, version, provides, dependencies = parse_package_string(package_string)
         return cls(name, version, provides, dependencies)
@@ -119,16 +119,20 @@ class Package(object):
     def unique_name(self):
         return self.name + "-" + str(self.version)
 
-    def __repr__(self):
+    @property
+    def package_string(self):
         strings = ["%s-%s" % (self.name, self.version)]
         if self.dependencies:
             strings.append("depends (%s)" % ", ".join(str(s) for s in self.dependencies))
         if self.provides:
             strings.append("provides (%s)" % ", ".join(str(s) for s in self.provides))
-        return "Package(%r)" % ", ".join(strings)
+        return "; ".join(strings)
+
+    def __repr__(self):
+        return "Package(%r)" % self.package_string
 
     def __str__(self):
-        return self.unique_name
+        return self.package_string
 
     def __eq__(self, other):
         return self.name == other.name and self.version == other.version \
