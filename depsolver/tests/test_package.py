@@ -18,15 +18,15 @@ R = Requirement.from_string
 
 class TestPackage(unittest.TestCase):
     def test_construction(self):
-        r_provides = set()
+        r_provides = ()
         r_id = hashlib.md5(six.b("numpy-1.3.0")).hexdigest()
 
         package = Package("numpy", V("1.3.0"))
         self.assertEqual(package.provides, r_provides)
-        self.assertEqual(package.dependencies, set())
+        self.assertEqual(package.dependencies, ())
         self.assertEqual(package.id, r_id)
 
-        r_provides = set([R("numpy == 1.3.0")])
+        r_provides = (R("numpy == 1.3.0"),)
         r_id = hashlib.md5(six.b("nomkl_numpy-1.3.0")).hexdigest()
 
         package = Package("nomkl_numpy", V("1.3.0"), provides=r_provides)

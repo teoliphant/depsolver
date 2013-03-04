@@ -76,8 +76,8 @@ class Package(object):
         >>> numpy_1_3_0 = Package("numpy", Version.from_string("1.3.0"))
         >>> P("numpy-1.3.0") == numpy_1_3_0
         True
-        >>> P("numpy-1.3.0; depends (mkl >= 10.3.0, mkl <= 10.4.0)")
-        Package('numpy-1.3.0; depends (mkl >= 10.3.0, mkl <= 10.4.0)')
+        >>> P("numpy-1.3.0; depends (mkl <= 10.4.0, mkl >= 10.3.0)")
+        Package('numpy-1.3.0; depends (mkl <= 10.4.0, mkl >= 10.3.0)')
         """
         name, version, provides, dependencies = parse_package_string(package_string)
         return cls(name, version, provides, dependencies)
@@ -102,15 +102,18 @@ class Package(object):
         self.name = name
         self.version = version
 
+        def _sorted(requirements):
+            return sorted(requirements, key=lambda req: repr(req))
+
         if provides is None:
-            self.provides = set()
+            self.provides = ()
         else:
-            self.provides = set(provides)
+            self.provides = tuple(_sorted(set(provides)))
 
         if dependencies is None:
-            self.dependencies = set()
+            self.dependencies = ()
         else:
-            self.dependencies = set(dependencies)
+            self.dependencies = tuple(_sorted(set(dependencies)))
 
         # FIXME: id detail should be implemented outside Package interface
         self.id = hashlib.md5(self.unique_name.encode("ascii")).hexdigest()
