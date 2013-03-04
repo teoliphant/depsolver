@@ -132,7 +132,7 @@ class Package(object):
         return "Package(%r)" % self.package_string
 
     def __str__(self):
-        return self.package_string
+        return self.unique_name
 
     def __eq__(self, other):
         return self.name == other.name and self.version == other.version \

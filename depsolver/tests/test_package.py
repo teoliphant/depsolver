@@ -40,7 +40,7 @@ class TestPackage(unittest.TestCase):
     def test_str(self):
         provides = set([R("numpy == 1.3.0")])
         package = Package("nomkl_numpy", V("1.3.0"), provides=provides)
-        self.assertEqual(str(package), "nomkl_numpy-1.3.0; provides (numpy == 1.3.0)")
+        self.assertEqual(str(package), "nomkl_numpy-1.3.0")
 
     def test_repr(self):
         package = Package("numpy", V("1.3.0"))
