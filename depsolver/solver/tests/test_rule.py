@@ -1,17 +1,8 @@
-import sys
 import unittest
 
 from depsolver.solver.rule \
     import \
         Rule, Literal
-
-def expected_failure_if(condition):
-    def dec(f):
-        if condition:
-            return unittest.expectedFailure(f)
-        else:
-            return f
-    return dec
 
 class TestLiteral(unittest.TestCase):
     def test_simple(self):
@@ -48,7 +39,7 @@ class TestRule(unittest.TestCase):
         b = Literal("b")
         clause = Rule([a, b])
 
-        self.assertEqual(clause.literal_names, set(["a", "b"]))
+        self.assertEqual(clause.literal_names, ("a", "b"))
         self.assertFalse(clause.is_assertion)
 
         clause = Rule([a])
@@ -58,12 +49,12 @@ class TestRule(unittest.TestCase):
     def test_create_from_string(self):
         clause = Rule.from_string("a | b | ~c")
 
-        self.assertEqual(clause.literal_names, set(["a", "b", "c"]))
+        self.assertEqual(clause.literal_names, ("a", "b", "c"))
         self.assertTrue(clause.evaluate({"a": False, "b": False, "c": False}))
 
         clause = Rule.from_string("a | b | c")
 
-        self.assertEqual(clause.literal_names, set(["a", "b", "c"]))
+        self.assertEqual(clause.literal_names, ("a", "b", "c"))
         self.assertFalse(clause.evaluate({"a": False, "b": False, "c": False}))
 
     def test_or(self):
@@ -72,7 +63,7 @@ class TestRule(unittest.TestCase):
         clause = Rule([a, b])
         clause |= Literal("c")
 
-        self.assertEqual(clause.literal_names, set(["a", "b", "c"]))
+        self.assertEqual(clause.literal_names, ("a", "b", "c"))
 
         a = Literal("a")
         b = Literal("b")
@@ -82,11 +73,8 @@ class TestRule(unittest.TestCase):
         d = Literal("d")
         clause |= Rule([c, d])
 
-        self.assertEqual(clause.literal_names, set(["a", "b", "c", "d"]))
+        self.assertEqual(clause.literal_names, ("a", "b", "c", "d"))
 
-    # FIXME: fix repr not to depend on set order (which is undefined and
-    # happened to change on 3.3)
-    @expected_failure_if(sys.version_info >= (3, 3))
     def test_repr(self):
         a = Literal("a")
         b = Literal("b")

@@ -76,7 +76,7 @@ class Rule(object):
 
     def __init__(self, literals):
         self._literals = frozenset(literals)
-        self._literals_set = frozenset(l.name for l in literals)
+        self._literals_set = tuple(sorted(l.name for l in self._literals))
 
         self._name_to_literal = dict((literal.name, literal) for literal in literals)
 
